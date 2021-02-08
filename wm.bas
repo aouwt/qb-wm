@@ -17,7 +17,7 @@ TYPE winType 'Window type definition. QB64 is not object-oriented, so we have to
 
 END TYPE
 
-__backgnd& = _LOADIMAGE("back.png", 32) 'Background image.
+__backgnd& = _LOADIMAGE("images/back.png", 32) 'Background image.
 __screeni& = NEWIMAGE(640, 480, 32) 'SCREEN image on startup. This changes any time the window is resized, but MUST be a valid _NEWIMAGE handle to prevent Illegal Function Call errors
 SCREEN __screeni&
 DEST DISPLAY
@@ -39,7 +39,7 @@ temp.t = "Log"
 win.log% = newWin(temp) 'Create the window. Handle is put into win.log%.
 
 temp.t = "Test" 'Image window
-temp.ih = LOADIMAGE("image2.jpg", 32)
+temp.ih = LOADIMAGE("images/image.jpg", 32)
 win.img% = newWin(temp)
 
 temp.t = "Text editor" 'Text editor window
