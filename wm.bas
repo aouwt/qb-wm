@@ -22,8 +22,6 @@ __screeni& = NEWIMAGE(640, 480, 32) 'SCREEN image on startup. This changes any t
 SCREEN __screeni&
 DEST DISPLAY
 
-'NOTE TO CONTRIBUTORS: QuickBasic is weird. $DYNAMIC here is technically commented out, but because it's a metacommand, it only works when commented out.
-'Luckily, QB64 metacommands don't have this principle.
 REM $DYNAMIC  'We need w() and wByFocus() to be resizable so we can hold more windows.
 
 DIM w(0 TO 0) AS winType ' w() stores all window information (see TYPE winType)
@@ -51,89 +49,50 @@ win.cat% = newWin(temp)
 DO
      FOR win% = LBOUND(w) TO UBOUND(w)
           SELECT CASE win%
-               CASE win.log%
-                    logp ""
-               CASE win.img%
-               CASE win.cat%
-                    DEST w(win.cat%).ih
-                    CLS
+               CASE win.log% 'Log window
+                    logp "" 'Empty input just refreshes the window
 
-                    SELECT CASE __INKEY$
+
+               CASE win.img% 'The image window doesn't change, so we dont need to do anything.
+
+
+               CASE win.cat% 'Text editor window
+
+                    SELECT CASE __INKEY$ '__INKEY$ is updated when upd is called.
                          CASE CHR$(8) 'backspace
-                         CASE ELSE
-                              win.cat.c$ = win.cat.c$ + __INKEY$
+                         CASE ELSE: win.cat.c$ = win.cat.c$ + __INKEY$ 'Append keypress to window
                     END SELECT
 
+                    IF (w(win%).w > 8) AND (w(win%).h > 8) THEN
+                         FREEIMAGE w(win%).ih 'Resize the window. Not required every frame, but it should be fine.
+                         w(win%).ih = NEWIMAGE(w(win%).w, w(win%).h, 32)
+                    END IF
 
+                    DEST w(win.cat%).ih
+                    PRINT win.cat.c$;
+
+
+               CASE ELSE 'Other window
+                    IF (w(win%).w > 8) AND (w(win%).h > 8) THEN 'Resize it. Again, not needed every frame, but it should be fine.
+                         FREEIMAGE w(win%).ih
+                         w(win%).ih = NEWIMAGE(w(win%).w, w(win%).h, 32)
+                    END IF
+
+                    'Window contents
+                    DEST w(win%).ih
+                    PRINT "X:"; w(win%).x, "Y:"; w(win%).y
+                    PRINT "W:"; w(win%).w, "H:"; w(win%).h
+                    PRINT "T:"; w(win%).t
+                    PRINT "IH:"; w(win%).ih
+                    PRINT "F:"; w(win%).f, "hdl:"; win%
+                    PRINT "wByFocus:"; wByFocus(w(win%).f)
+
+                    'Window title
+                    w(win%).t = "Window " + LTRIM$(STR$(win%)) + " (" + LTRIM$(STR$(w(win%).x)) + "," + LTRIM$(STR$(w(win%).y)) + ")-(" + LTRIM$(STR$(w(win%).w + w(win%).x)) + "," + LTRIM$(STR$(w(i).h + w(i).y)) + ")"
           END SELECT
      NEXT
-
+     upd
 LOOP
-
-
-'DO
-'IF (WIDTH(w(0).ih) <> w(0).w) OR (HEIGHT(w(0).ih) <> w(0).h) THEN logp ""
-'upd
-'DO WHILE MOUSEINPUT
-'     IF MOUSEBUTTON(1) THEN
-'          w(i%).x = w(i%).x + (MOUSEX - mx)
-'          w(i%).y = w(i%).y + (MOUSEY - my)
-'     ELSEIF MOUSEBUTTON(2) THEN
-'          w(i%).w = w(i%).w + (MOUSEX - mx)
-'          w(i%).h = w(i%).h + (MOUSEY - my)
-'     END IF
-'     mx = MOUSEX
-'     my = MOUSEY
-'LOOP
-
-''PRINTSTRING (0, 0), "win: " + STR$(i)
-''PRINTSTRING (0, 16), "bounds: " + STR$(LBOUND(w)) + " to " + STR$(UBOUND(w))
-''PRINT "hi"
-'DISPLAY
-
-
-'i$ = INKEY$
-''i$ = ""
-'IF i$ <> "" THEN
-'     IF i$ = " " THEN
-'          temp.ih = NEWIMAGE(640, 480, 32)
-'          n = newWin(temp)
-'     END IF
-'     IF i$ = CHR$(27) THEN
-'          FREEIMAGE w(i).ih
-'          w(i).ih = 0
-'     END IF
-'     DO: LOOP UNTIL INKEY$ = ""
-'END IF
-
-'i = __focusWindow%
-
-'IF (i = 0) OR (i = 1) THEN CONTINUE
-'IF w(i).ih = 0 THEN CONTINUE
-
-'IF ((w(i).w <> WIDTH(w(i).ih)) OR (w(i).h <> HEIGHT(w(i).ih))) THEN
-'     IF (w(i).w > 8) AND (w(i).h > 8) THEN
-'          FREEIMAGE w(i).ih
-'          w(i).ih = NEWIMAGE(w(i).w, w(i).h, 32)
-'     END IF
-'END IF
-
-'w(i).t = "Window " + LTRIM$(STR$(i)) + " (" + LTRIM$(STR$(w(i).x)) + "," + LTRIM$(STR$(w(i).y)) + ")-(" + LTRIM$(STR$(w(i).w + w(i).x)) + "," + LTRIM$(STR$(w(i).h + w(i).y)) + ")"
-
-'DEST w(i).ih
-'COLOR RGBA32(255, 255, 255, 255), RGBA32(0, 0, 0, 0)
-'CLS
-'PRINT "x:", w(i).x
-'PRINT "y:", w(i).y
-'PRINT
-'PRINT "w:", w(i).w
-'PRINT "h:", w(i).h
-'PRINT
-'PRINT "t:", w(i).t
-'PRINT "ih:", w(i).ih
-'LOOP
-
-
 
 SUB putWin (w AS winType)
      IF w.ih = 0 THEN EXIT SUB 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
@@ -175,40 +134,23 @@ SUB upd STATIC
      PRINTSTRING (0, 0), "FPS:" + STR$(fps) 'the fps function is fps the amount of times it's called in a second.
      'Or, more accurately, the multiplicative inverse of the amount of time since it was last called
 
+     FOR i% = LBOUND(w) TO UBOUND(w)
+          IF (MOUSEX >= w(i%).x) AND (MOUSEX <= (w(i%).x + w(i%).w)) AND (MOUSEY >= w(i%).y) AND (MOUSEY <= (w(i%).y + 18)) THEN 'if mouse is over titlebar
+               IF MOUSEBUTTON(1) THEN 'Left click
+                    w(i%).x = w(i%).x + mx
+                    w(i%).y = w(i%).y + my
+               ELSEIF MOUSEBUTTON(2) THEN 'Middle click
 
-     IF MOUSEBUTTON(1) THEN 'vvvv This REALLY needs rewritten.
-          FOR i% = UBOUND(w) TO LBOUND(w) STEP -1
-               IF (MOUSEX < (w(i%).w + w(i%).x)) AND (MOUSEX > w(i%).x) AND (MOUSEY < (w(i%).h + w(i%).y)) AND (MOUSEY > w(i%).y) THEN
-                    w(i%).f = 0
-                    __focusWindow% = i%
-
-                    FOR i% = i% - 1 TO LBOUND(w) STEP -1
-                         w(i%).f = 1 'Note to self: add focus layers.
-                    NEXT
-                    EXIT FOR
-               ELSE w(i%).f = 1
+               ELSEIF MOUSEBUTTON(3) THEN 'Right click
+                    w(i%).w = w(i%).w + mx
+                    w(i%).h = w(i%).h + my
                END IF
-          NEXT
-     ELSE
-          FOR i% = UBOUND(w) TO LBOUND(w) STEP -1
-               IF w(i%).f = 0 THEN
-                    __focusWindow% = i%
-                    FOR i% = i% - 1 TO LBOUND(w) STEP -1
-                         w(i%).f = 1
-                    NEXT
-                    EXIT FOR
-               END IF
-          NEXT
-     END IF
-
-     FOR i% = LBOUND(w) TO UBOUND(w) 'Needs rewritten to allow for focus layers.
-          'wByFocus() is specifically made for this.
-
-          IF w(i%).ih = 0 THEN CONTINUE 'Skip "free" slots
-          IF w(i%).f = 0 THEN f% = i% ELSE putWin w(i%) 'If focus, draw last. Otherwise, draw now.
+               my = (MOUSEY - my)
+               mx = (MOUSEX - mx)
+          END IF
+          putWin w(i%)
      NEXT
-     IF (w(f%).ih <> 0) AND (w(f%).ih <> -1) THEN putWin w(f%) 'Draw focus last
-
+     DISPLAY
 END SUB
 
 FUNCTION newWin% (template AS winType) STATIC
@@ -227,8 +169,6 @@ FUNCTION newWin% (template AS winType) STATIC
      newWin% = UBOUND(w)
 END FUNCTION
 
-
-'SUB logp (s$): PRINT s$: END SUB
 SUB logp (s$) STATIC
      SHARED w() AS winType
      i& = DEST
@@ -253,3 +193,4 @@ SUB mouse
           'if w(i%).s
      NEXT
 END SUB
+
