@@ -1,8 +1,16 @@
-# wm
-This is a very crude window manager, written in QB64. Due to QB64 restrictions, it does not currently support X/Wayland/etc. However, I do intend to make a *thing* that can interface to programs using QB64's TCP functionality, but that would be in the far future. As it stands now, it's merely a proof-of-concept, and not practical by any means.
+# qb-wm
+A (very basic <sup><small>no pun intended</small></sup>) window manager, written in [QB64](https://qb64.org)
+
+<br />
+
+Due to QB64 restrictions, it does not currently support X/Wayland/etc. However, I do intend to make a *thing* that can interface to programs using QB64's TCP functionality, but that would be in the far future. As it stands now, it's merely a proof-of-concept, and not practical by any means.
+
+If you want to contribute, I will happily allow it. I don't have alot of time on my hands, and this isn't exactly a high priority for me, so any contibutions will be appreciated.
+
+---
 
 ## Usage
-Simply run `wm` on Linux, or `wm.exe` on Windows. I cannot provide precompiled binaries for OSX, as I do not own a Mac, but you can compile it on a Mac.
+Simply open `wm.bas` in the [QB64 IDE](https://github.com/QB64Team/qb64/releases/), and press <kbd>F5</kbd> to compile and run!
 
 <br />
 
@@ -20,6 +28,9 @@ Controls are:
 - Space adds a new window.
 - Escape removes the current focused window.
 
+Although that's about to change with a pull request that is on it's way.
+
+---
 
 ## Compiling
-It requires using at least version 1.4 of [QB64](https://qb64.org) to compile, because it uses `$NOPREFIX`. However, if you remove `$NOPREFIX` and add the prefixes to the source, you could thoretically run it on an older version.
+It requires using at least version 1.4 of [QB64](https://qb64.org) to compile, because `$NOPREFIX` is not available in versions earlier than that.
