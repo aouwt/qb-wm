@@ -1,0 +1,66 @@
+'$NOPREFIX allows us to use QB64 keywords without the beginning underscore
+'eg. We can use UNSIGNED instead of _UNSIGNED
+$NOPREFIX
+'Allow resizing the window
+$RESIZE:ON
+
+
+TYPE winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
+
+     ih AS LONG ' Image handle. A value of 0 indicates that this is an open window handle.
+     t AS STRING ' Title
+     x AS INTEGER ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
+     y AS INTEGER ' Y position
+     w AS UNSIGNED INTEGER ' Width
+     h AS UNSIGNED INTEGER ' Height
+     f AS UNSIGNED INTEGER ' Focus order.
+
+END TYPE
+
+
+'Initialize variables
+REM $DYNAMIC
+DIM w(0 TO 0) AS winType
+
+DIM SHARED __template_Win AS winType
+DIM SHARED __template_Overlay AS winType
+DIM SHARED __template_WinOptions AS winType
+
+DIM __image_Background AS LONG
+DIM __image_Screen AS LONG
+REM DIM __image_Cursor AS LONG 'For another day...
+
+
+'Initialize the IMAGEs
+__image_Background = LOADIMAGE("images/back.png", 32)
+
+'Testing: Hardware accelleration (i cant speel)
+i& = NEWIMAGE(640, 480, 32)
+__image_Screen = COPYIMAGE(i&, 33)
+FREEIMAGE i&
+SCREEN __image_Screen
+
+
+'Initialize the window templates
+__template_Win.t = "Untitled window"
+__template_Win.w = 320
+__template_Win.h = 240
+
+__template_Overlay.t = ""
+__template_Overlay.w = 120
+__template_Overlay.h = 60
+
+__template_WinOptions.t = ""
+__template_WinOptions.w = 120
+__template_WinOptions.h = 60
+
+
+'Initialize the WinOptions template's contents
+__template_WinOptions.ih = NEWIMAGE(__template_WinOptions.w, __template_WinOptions.h, 32)
+
+DEST __template_WinOptions.ih
+PRINTSTRING (0, 0), "Close"
+PRINTSTRING (0, 16), "Cancel"
+
+
+DEST DISPLAY
