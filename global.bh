@@ -4,13 +4,13 @@ OPTION EXPLICIT
 
 TYPE winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
 
-     IH AS LONG ' Image handle. A value of 0 indicates that this is an open window handle.
-     T AS STRING ' Title
-     X AS INTEGER ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
-     Y AS INTEGER ' Y position
-     W AS UNSIGNED INTEGER ' Width
-     H AS UNSIGNED INTEGER ' Height
-     F AS UNSIGNED INTEGER ' Focus order.
+    IH AS LONG ' Image handle. A value of 0 indicates that this is an open window handle.
+    T AS STRING ' Title
+    X AS INTEGER ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
+    Y AS INTEGER ' Y position
+    W AS UNSIGNED INTEGER ' Width
+    H AS UNSIGNED INTEGER ' Height
+    F AS UNSIGNED INTEGER ' Focus order.
 
 END TYPE
 
@@ -27,7 +27,8 @@ DIM __image_Background AS LONG
 DIM __image_Screen AS LONG
 REM DIM __image_Cursor AS LONG 'For another day...
 
-DIM __INKEY AS STRING
+DIM SHARED __INKEY AS STRING
+DIM SHARED __focusedWindow AS INTEGER
 
 
 'Initialize the IMAGEs
@@ -55,7 +56,7 @@ __template_WinOptions.IH = NEWIMAGE(__template_WinOptions.W, __template_WinOptio
 
 DEST __template_WinOptions.IH
 PRINTSTRING (0, 0), "Close"
-PRINTSTRING (0, 16), "Cancel"
+REM PRINTSTRING (0, 16), "Cancel"
 
 
 DEST DISPLAY
