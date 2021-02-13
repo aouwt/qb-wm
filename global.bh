@@ -1,40 +1,41 @@
-$NOPREFIX
-$RESIZE:ON
-OPTION EXPLICIT
+$NoPrefix
+$Resize:On
+Option Explicit
 
-TYPE winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
+Type winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
 
-    IH AS LONG ' Image handle. A value of 0 indicates that this is an open window handle.
-    T AS STRING ' Title
-    X AS INTEGER ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
-    Y AS INTEGER ' Y position
-    W AS UNSIGNED INTEGER ' Width
-    H AS UNSIGNED INTEGER ' Height
-    F AS UNSIGNED INTEGER ' Focus order.
+    IH As Long ' Image handle. A value of 0 indicates that this is an open window handle.
+    T As String ' Title
+    X As Integer ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
+    Y As Integer ' Y position
+    Z As Unsigned Byte ' Z position
+    W As Unsigned Integer ' Width
+    H As Unsigned Integer ' Height
 
-END TYPE
+End Type
 
 
 'Initialize variables
-REM $DYNAMIC
-DIM w(0 TO 0) AS winType
+Rem $DYNAMIC
+Dim w(0 To 0) As winType
+Dim winZOrder(0 To 255) As Byte
 
-DIM SHARED __template_Win AS winType
-DIM SHARED __template_Overlay AS winType
-DIM SHARED __template_WinOptions AS winType
+Dim Shared __template_Win As winType
+Dim Shared __template_Overlay As winType
+Dim Shared __template_WinOptions As winType
 
-DIM __image_Background AS LONG
-DIM __image_Screen AS LONG
-REM DIM __image_Cursor AS LONG 'For another day...
+Dim __image_Background As Long
+Dim __image_Screen As Long
+Rem DIM __image_Cursor AS LONG 'For another day...
 
-DIM SHARED __INKEY AS STRING
-DIM SHARED __focusedWindow AS INTEGER
+Dim Shared __InKey As String
+Dim Shared __focusedWindow As Integer
 
 
 'Initialize the IMAGEs
-__image_Background = LOADIMAGE("images/back.png", 32)
-__image_Screen = NEWIMAGE(640, 480, 32)
-SCREEN __image_Screen
+__image_Background = LoadImage("images/back.png", 32)
+__image_Screen = NewImage(640, 480, 32)
+Screen __image_Screen
 
 
 'Initialize the window templates
@@ -52,11 +53,11 @@ __template_WinOptions.H = 60
 
 
 'Initialize the WinOptions template's contents
-__template_WinOptions.IH = NEWIMAGE(__template_WinOptions.W, __template_WinOptions.H, 32)
+__template_WinOptions.IH = NewImage(__template_WinOptions.W, __template_WinOptions.H, 32)
 
-DEST __template_WinOptions.IH
-PRINTSTRING (0, 0), "Close"
-REM PRINTSTRING (0, 16), "Cancel"
+Dest __template_WinOptions.IH
+PrintString (0, 0), "Close"
+Rem PRINTSTRING (0, 16), "Cancel"
 
 
-DEST DISPLAY
+Dest Display
