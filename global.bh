@@ -1,0 +1,63 @@
+$NoPrefix
+$Resize:On
+Option Explicit
+
+Type winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
+
+    IH As Long ' Image handle. A value of 0 indicates that this is an open window handle.
+    T As String ' Title
+    X As Integer ' X position. Should be Single but for some reason QB64 doesn't like virginity :(
+    Y As Integer ' Y position
+    Z As Unsigned Byte ' Z position
+    W As Unsigned Integer ' Width
+    H As Unsigned Integer ' Height
+
+End Type
+
+
+'Initialize variables
+Rem $Dynamic
+Dim w(0 To 0) As winType
+Dim winZOrder(0 To 255) As Byte
+
+Dim Shared __template_Win As winType
+Dim Shared __template_Overlay As winType
+Dim Shared __template_WinOptions As winType
+
+Dim __image_Background As Long
+Dim __image_Screen As Long
+Rem DIM __image_Cursor AS LONG 'For another day...
+
+Dim Shared __inKey As String
+Dim Shared __focusedWindow As Integer
+
+
+'Initialize the IMAGEs
+__image_Background = LoadImage("images/back.png", 32)
+__image_Screen = NewImage(640, 480, 32)
+Screen __image_Screen
+
+
+'Initialize the window templates
+__template_Win.T = "Untitled window"
+__template_Win.W = 320
+__template_Win.H = 240
+
+__template_Overlay.T = ""
+__template_Overlay.W = 120
+__template_Overlay.H = 60
+
+__template_WinOptions.T = ""
+__template_WinOptions.W = 120
+__template_WinOptions.H = 60
+
+
+'Initialize the WinOptions template's contents
+__template_WinOptions.IH = NewImage(__template_WinOptions.W, __template_WinOptions.H, 32)
+
+Dest __template_WinOptions.IH
+PrintString (0, 0), "Close"
+Rem PRINTSTRING (0, 16), "Cancel"
+
+
+Dest Display
