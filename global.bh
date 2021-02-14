@@ -6,7 +6,7 @@ Type winType 'Window type definition. QB64 is not object-oriented, so we have to
 
     IH As Long ' Image handle. A value of 0 indicates that this is an open window handle.
     T As String ' Title
-    X As Integer ' X position. Should be SINGLE but for some reason QB64 doesn't like virginity :(
+    X As Integer ' X position. Should be Single but for some reason QB64 doesn't like virginity :(
     Y As Integer ' Y position
     Z As Unsigned Byte ' Z position
     W As Unsigned Integer ' Width
@@ -16,7 +16,7 @@ End Type
 
 
 'Initialize variables
-Rem $DYNAMIC
+Rem $Dynamic
 Dim w(0 To 0) As winType
 Dim winZOrder(0 To 255) As Byte
 

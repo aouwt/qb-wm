@@ -137,7 +137,7 @@ Sub upd Static
     fixFocusArray
 
     Dim i As Integer
-    For i = UBound(winzorder) To LBound(winzorder) Step -1 '#### TODO: Figure out why winZOrder is going backwards
+    For i = UBound(winZOrder) To LBound(winZOrder) Step -1
         If winZOrder(i) <> 0 Then
             putWin w(winZOrder(i))
         End If
@@ -225,14 +225,18 @@ End Sub
 
 Sub updateMouse Static
     Shared w() As winType
+    Shared winZOrder() As Byte
 
 
     Dim optMenu As Integer, optWin As Integer
     Dim mLockX As Single, mLockY As Single 'Or as I like to call it, mmmlocks and mmmlockie
 
-    Dim i As Integer
-    For i = LBound(w) To UBound(w)
+    Dim win As Integer, i As Integer
+    For win = UBound(winZOrder) To LBound(winZOrder) Step -1
+        i = winZOrder(win)
+        If i = 0 Then Continue
         If w(i).T = "" Then Continue
+
         If (MouseX >= w(i).X) And (MouseY <= (w(i).X + w(i).W)) _
         And(MouseY >= w(i).Y) And (MouseY <= (w(i).Y + 18)) Then ' If mouse is over titlebar
 
@@ -253,6 +257,8 @@ Sub updateMouse Static
             End If
 
         End If
+
+
     Next
 
     If (optMenu <> 0) And (__inKey$ <> " ") Then
@@ -294,17 +300,21 @@ Sub fixFocusArray
     ReDim winZOrder(0 To 255) As Byte 'Since we're not using PRESERVE, it erases the contents of winZOrder as well
 
     Dim i As Integer
-    For i = LBound(w) To UBound(w)
-        If w(i).T = "" Then winZOrder(0) = i
-    Next
+    'For i = LBound(w) To UBound(w)
+    '    If w(i).T = "" Then winZOrder(UBound(winZOrder)) = i
+    'Next
 
     For i = UBound(w) To LBound(w) Step -1 'Prioritize newer windows by going backwards
+        If i = __focusedWindow Then
+            w(i).Z = 0
+            winZOrder(0) = i
+            Continue
+        End If
 
-        Do While ((w(i).Z = __focusedWindow) And (i <> __focusedWindow)) Or (winZOrder(w(i).Z) <> 0)
-            w(i).Z = w(i).Z + 1
-        Loop
+        If w(i).Z = 0 Then
+            w(i).Z = 1
+        End If
         winZOrder(w(i).Z) = i
-
     Next
 End Sub
 
