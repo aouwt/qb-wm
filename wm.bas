@@ -10,12 +10,14 @@ temp = __template_Win
 temp.X = 50
 temp.IH = NewImage(320, 240, 32)
 temp.T = "Log"
+temp.FH = __font_Mono
 win_Log = newWin(temp)
 
 temp = __template_Win
 temp.X = 200
 temp.IH = NewImage(320, 240, 32)
 temp.T = "Text editor"
+temp.FH = __font_Sans
 win_Cat = newWin(temp)
 
 temp = __template_Win
@@ -24,19 +26,22 @@ temp.IH = LoadImage("images/image.jpg", 32)
 temp.T = "Test"
 win_Img = newWin(temp)
 
-'__focusedWindow = win_Log
-
 logp "INFO> main routine: Ready"
 Dim win As Integer
 Do
+    Do While MouseInput: updateMouse: Loop
+
     For win = LBound(w) To UBound(w)
         If w(win).IH = 0 Then Continue
         Select Case win
+
+
             Case win_Log 'Log window
-                logp "" 'Empty input just refreshes the window
+                'logp "" 'Empty input just refreshes the window
                 If (w(win_Log).Z = 0) And (__inKey = "+") And (otherWin = 0) Then
                     temp = __template_Win
                     temp.IH = NewImage(640, 480, 32)
+                    temp.FH = __font_Mono
                     otherWin = newWin(temp)
                 End If
 
@@ -56,6 +61,7 @@ Do
                     If (w(win).W > 8) And (w(win).H > 8) Then
                         FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
                         w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                        Font w(win).FH, w(win).IH
                     End If
 
                     Dest w(win_Cat).IH
@@ -68,21 +74,23 @@ Do
                 If (w(win).W > 8) And (w(win).H > 8) Then 'Resize it. Again, not needed every frame, but it should be fine.
                     FreeImage w(win).IH
                     w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    Font w(win).FH, w(win).IH
                 End If
 
                 'Window contents
                 Dest w(win).IH
                 Print "X:"; w(win).X, "Y:"; w(win).Y
+                Print "Z:"; w(win).Z
                 Print "W:"; w(win).W, "H:"; w(win).H
-                Print "T:"; w(win).T
-                Print "IH:"; w(win).IH
-                Print "F:"; w(win).Z, "win:"; win
+                Print "T:"; w(win).T, "WH:"; win
+                Print "IH:"; w(win).IH, "FH:"; w(win).FH
 
                 'Window title
                 w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
         End Select
     Next
     upd
+    Display
     Limit 60
 Loop
 
@@ -97,20 +105,17 @@ Loop
 
 
 Sub putWin (w As winType)
+    Shared __screenFont As Long
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
 
-    If w.Z = 0 Then
-
-        Line (w.X, w.Y)-Step(w.W + 2, w.H + 18), RGBA32(0, 0, 0, 200), BF 'If the window is focused, we make a darker backing
-    Else Line (w.X, w.Y)-Step(w.W + 2, w.H + 18), RGBA32(0, 0, 0, 64), BF 'If it doesn't, we use a lighter backing
-
-    End If
-
+    If w.Z = 0 Then _
+             Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 200), BF _
+        Else Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64), BF
 
     Color RGBA32(255, 255, 255, 255), RGBA32(0, 0, 0, 16) ' Make the title transparent
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
-    PutImage (w.X + 1, w.Y + 17)-Step(w.W, w.H), w.IH, , , Smooth ' Put the contents of the window down
+    PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1)-Step(w.W, w.H), w.IH, , , Smooth ' Put the contents of the window down
 
     Rem If w.Z = 0 Then Line (w.X + 1, w.Y + 17)-Step(w.W, w.H), RGBA32(0, 0, 0, 127), BF 'Overlay. Disabled for now due to speed.
 End Sub
@@ -123,6 +128,7 @@ Sub upd Static
     Shared w() As winType
     Shared __image_Background As Long
     Shared __image_Screen As Long
+    Shared __screenFont As Long
     Shared winZOrder() As Byte
 
     __inKey$ = InKey$
@@ -133,13 +139,13 @@ Sub upd Static
         FreeImage __image_Screen
         __image_Screen = NewImage(ResizeWidth, ResizeHeight, 32) 'Create the new image...
         Screen __image_Screen '...and slap it down on the screen!
+        Font __screenFont, Display
     End If
 
 
     PutImage , __image_Background 'Put the background image down on top of the previous frame's contents so we don't paint the screen. (although that would be noice...)
     PrintString (0, 0), "FPS:" + Str$(fps) 'the fps function is fps the amount of times it's called in a second.
 
-    Do While MouseInput: updateMouse: Loop
     fixFocusArray
 
     Dim i As Integer
@@ -149,7 +155,6 @@ Sub upd Static
         End If
     Next
 
-    Display
 End Sub
 
 
@@ -193,13 +198,18 @@ Sub logp (s As String) Static
 
     If s <> "" Then l = l + s + Chr$(13)
 
-    FreeImage w(win_Log).IH
-    w(win_Log).IH = NewImage(w(win_Log).W, w(win_Log).H, 32)
-    Dest w(win_Log).IH
+    If win_Log Then
+        If w(win_Log).IH Then
+            FreeImage w(win_Log).IH
+            w(win_Log).IH = NewImage(w(win_Log).W, w(win_Log).H, 32)
+            Dest w(win_Log).IH
+            Font w(win_Log).FH
 
-    Print l;
+            Print l;
 
-    Dest i 'Restore the DEST IMAGE
+            Dest i 'Restore the DEST IMAGE
+        End If
+    End If
 End Sub
 
 
@@ -235,6 +245,7 @@ End Sub
 Sub updateMouse Static
     Shared w() As winType
     Shared winZOrder() As Byte
+    Shared __screenFont As Long
 
 
     Dim optMenu As Integer, optWin As Integer
@@ -247,7 +258,7 @@ Sub updateMouse Static
         If w(i).T = "" Then Continue
 
         If (MouseX >= w(i).X) And (MouseY <= (w(i).X + w(i).W)) _
-        And(MouseY >= w(i).Y) And (MouseY <= (w(i).Y + 18)) Then ' If mouse is over titlebar
+        And(MouseY >= w(i).Y) And (MouseY <= (w(i).Y + FontHeight(__screenFont) + 2)) Then ' If mouse is over titlebar
 
             If MouseButton(1) And (__inKey$ = " ") Then 'Open options (Middle click)
                 If optMenu = 0 Then

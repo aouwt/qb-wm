@@ -4,11 +4,12 @@ Option Explicit
 
 Type winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
 
-    IH As Long ' Image handle. A value of 0 indicates that this is an open window handle.
-    T As String ' Title
-    X As Integer ' X position. Should be Single but for some reason QB64 doesn't like virginity :(
-    Y As Integer ' Y position
-    Z As Unsigned Byte ' Z position
+    IH As Long '            Image handle. A value of 0 indicates that this is an open window handle.
+    FH As Long '            Font handle. Not really necessarry, as you can use _FONT() but it's useful when resizing
+    T As String '           Title. Empty string means that the window is a overlay
+    X As Integer '          X position. Should be Single but for some reason QB64 doesn't like virginity :(
+    Y As Integer '          Y position
+    Z As Unsigned Byte '    Z position
     W As Unsigned Integer ' Width
     H As Unsigned Integer ' Height
 
@@ -24,18 +25,34 @@ Dim Shared __template_Win As winType
 Dim Shared __template_Overlay As winType
 Dim Shared __template_WinOptions As winType
 
+Dim Shared __font_Header As Long
+Dim Shared __font_Body As Long
+Dim Shared __font_Mono As Long
+Dim Shared __font_Sans As Long
+Dim Shared __font_Serif As Long
+
 Dim __image_Background As Long
 Dim __image_Screen As Long
-Rem DIM __image_Cursor AS LONG 'For another day...
+
+Dim __screenFont As Long
 
 Dim Shared __inKey As String
 Dim Shared __focusedWindow As Integer
 
 
-'Initialize the IMAGEs
+'Initialize the IMAGEs...
 __image_Background = LoadImage("images/back.png", 32)
 __image_Screen = NewImage(640, 480, 32)
-Screen __image_Screen
+
+'...and the FONTs
+__font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14)
+__font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12)
+__font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND")
+
+__font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12)
+__font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12)
+
+__screenFont = __font_Header
 
 
 'Initialize the window templates
@@ -44,18 +61,21 @@ __template_Win.W = 320
 __template_Win.H = 240
 __template_Win.Z = 0
 __template_Win.IH = 0
+__template_Win.FH = __font_Body
 
 __template_Overlay.T = ""
 __template_Overlay.W = 120
 __template_Overlay.H = 60
 __template_Overlay.Z = 0
 __template_Overlay.IH = 0
+__template_Overlay.FH = __font_Body
 
 __template_WinOptions.T = ""
 __template_WinOptions.W = 120
 __template_WinOptions.H = 60
 __template_WinOptions.Z = 0
 __template_WinOptions.IH = NewImage(120, 60, 32)
+__template_WinOptions.FH = __font_Body
 
 
 
@@ -63,5 +83,9 @@ __template_WinOptions.IH = NewImage(120, 60, 32)
 Dest __template_WinOptions.IH
 PrintString (0, 0), "Close"
 
+
+'And finally, initialize the SCREEN.
+Font __screenFont, __image_Screen
+Screen __image_Screen
 
 Dest Display
