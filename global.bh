@@ -17,7 +17,7 @@ End Type
 
 'Initialize variables
 Rem $Dynamic
-Dim w(0 To 0) As winType
+Dim w(1 To 1) As winType
 Dim winZOrder(0 To 255) As Byte
 
 Dim Shared __template_Win As winType
@@ -42,22 +42,26 @@ Screen __image_Screen
 __template_Win.T = "Untitled window"
 __template_Win.W = 320
 __template_Win.H = 240
+__template_Win.Z = 0
+__template_Win.IH = 0
 
 __template_Overlay.T = ""
 __template_Overlay.W = 120
 __template_Overlay.H = 60
+__template_Overlay.Z = 0
+__template_Overlay.IH = 0
 
 __template_WinOptions.T = ""
 __template_WinOptions.W = 120
 __template_WinOptions.H = 60
+__template_WinOptions.Z = 0
+__template_WinOptions.IH = NewImage(120, 60, 32)
+
 
 
 'Initialize the WinOptions template's contents
-__template_WinOptions.IH = NewImage(__template_WinOptions.W, __template_WinOptions.H, 32)
-
 Dest __template_WinOptions.IH
 PrintString (0, 0), "Close"
-Rem PRINTSTRING (0, 16), "Cancel"
 
 
 Dest Display

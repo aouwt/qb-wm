@@ -4,13 +4,13 @@ Dim temp As winType
 Dim win_Log As Integer
 Dim win_Img As Integer
 Dim win_Cat As Integer, win_Cat_Text As String
+Dim otherWin As Integer
 
 temp = __template_Win
 temp.X = 50
 temp.IH = NewImage(320, 240, 32)
 temp.T = "Log"
-win_Log = newWin(temp) 'this does nothing...
-win_Log = newWin(temp) '...wtf????
+win_Log = newWin(temp)
 
 temp = __template_Win
 temp.X = 200
@@ -24,9 +24,9 @@ temp.IH = LoadImage("images/image.jpg", 32)
 temp.T = "Test"
 win_Img = newWin(temp)
 
-__focusedWindow = win_Log
+'__focusedWindow = win_Log
 
-logp "main: Ready"
+logp "INFO> main routine: Ready"
 Dim win As Integer
 Do
     For win = LBound(w) To UBound(w)
@@ -34,7 +34,11 @@ Do
         Select Case win
             Case win_Log 'Log window
                 logp "" 'Empty input just refreshes the window
-
+                If (w(win_Log).Z = 0) And (__inKey = "+") And (otherWin = 0) Then
+                    temp = __template_Win
+                    temp.IH = NewImage(640, 480, 32)
+                    otherWin = newWin(temp)
+                End If
 
 
 
@@ -45,7 +49,7 @@ Do
             Case win_Cat 'Text editor window
                 If w(win_Cat).Z = 0 Then
                     Select Case __inKey '__inKey is updated when upd is called.
-                        Case Chr$(8) 'backspace
+                        Case Chr$(8): win_Cat_Text = Left$(win_Cat_Text, Len(win_Cat_Text) - 1) 'backspace
                         Case Else: win_Cat_Text = win_Cat_Text + __inKey 'Append keypress to window
                     End Select
 
@@ -60,26 +64,26 @@ Do
 
 
 
-                'Case Else 'Other window
-                '    If (w(win).W > 8) And (w(win).H > 8) Then 'Resize it. Again, not needed every frame, but it should be fine.
-                '        FreeImage w(win).IH
-                '        w(win).IH = NewImage(w(win).W, w(win).H, 32)
-                '    End If
+            Case otherWin 'Other window
+                If (w(win).W > 8) And (w(win).H > 8) Then 'Resize it. Again, not needed every frame, but it should be fine.
+                    FreeImage w(win).IH
+                    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                End If
 
-                '    Window contents
-                '    Dest w(win).IH
-                '    Print "X:"; w(win).X, "Y:"; w(win).Y
-                '    Print "W:"; w(win).W, "H:"; w(win).H
-                '    Print "T:"; w(win).T
-                '    Print "IH:"; w(win).IH
-                '    Print "F:"; w(win).Z, "win:"; win
+                'Window contents
+                Dest w(win).IH
+                Print "X:"; w(win).X, "Y:"; w(win).Y
+                Print "W:"; w(win).W, "H:"; w(win).H
+                Print "T:"; w(win).T
+                Print "IH:"; w(win).IH
+                Print "F:"; w(win).Z, "win:"; win
 
-                '    Window title
-                '    w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
+                'Window title
+                w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
         End Select
     Next
     upd
-    Limit 30
+    Limit 60
 Loop
 
 
@@ -163,6 +167,7 @@ Function newWin% (template As winType)
         If (w(i).IH = 0) Then
             newWin% = i
             w(i) = template
+            logp "INFO> newWin: Empty slot " + Str$(i) + " now holds window with image handle of " + Str$(w(i).IH)
             Exit Function
         End If
 
@@ -171,6 +176,7 @@ Function newWin% (template As winType)
     ReDim Preserve w(LBound(w) To UBound(w) + 1) As winType
     w(UBound(w)) = template
     newWin% = UBound(w)
+    logp "INFO> newWin: Extending w() to " + Str$(i) + " for window with image handle of " + Str$(w(i).IH)
 End Function
 
 
@@ -200,7 +206,6 @@ End Sub
 
 
 
-
 Function fps% Static
     Dim t As Double
     Dim t2 As Double
@@ -217,10 +222,12 @@ End Function
 Sub freeWin (hdl As Integer)
     Shared w() As winType
 
-    If w(hdl).IH = 0 Then logp "ERR> freeWin: Window " + LTrim$(Str$(hdl)) + " doesn't exist": Exit Sub
+    If w(hdl).IH = 0 Then logp "ERROR> freeWin: Window " + LTrim$(Str$(hdl)) + " doesn't exist": Exit Sub
     FreeImage w(hdl).IH
     w(hdl).IH = 0
 End Sub
+
+
 
 
 
@@ -258,8 +265,8 @@ Sub updateMouse Static
                 grabFocus i
             End If
 
-        ElseIf (mouseIsOver(i) = 0) And (MouseButton(1)) Then __focusedWindow = 0
-        ElseIf (mouseIsOver(i)) And (MouseButton(1)) Then grabFocus i
+            'ElseIf (mouseIsOver(i) = 0) And (MouseButton(1)) Then __focusedWindow = 0
+            'ElseIf (mouseIsOver(i)) And (MouseButton(1)) Then grabFocus i
         End If
 
 
@@ -296,6 +303,8 @@ End Sub
 
 
 
+
+
 Sub fixFocusArray
     Shared winZOrder() As Byte
     Shared w() As winType
@@ -315,18 +324,24 @@ Sub fixFocusArray
             Continue
         End If
 
-        If w(i).Z = 0 Then
-            w(i).Z = 1
-        End If
+        Do Until winZOrder(w(i).Z) = 0
+            w(i).Z = w(i).Z + 1
+        Loop
         winZOrder(w(i).Z) = i
     Next
 End Sub
+
+
+
 
 
 Function mouseIsOver` (win As Integer)
     Shared w() As winType
     mouseIsOver` = ((MouseX >= w(win).X) And (MouseX <= (w(win).X + w(win).W)) And (MouseY >= w(win).Y) And (MouseY <= (w(win).Y + w(win).H)))
 End Function
+
+
+
 
 
 
