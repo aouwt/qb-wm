@@ -24,7 +24,7 @@ win_Img = newWin(temp)
 
 __focusedWindow = win_Log
 
-
+logp "main: Ready"
 Dim win As Integer
 Do
     For win = LBound(w) To UBound(w)
@@ -41,18 +41,20 @@ Do
 
 
             Case win_Cat 'Text editor window
-                Select Case __InKey '__INKEY is updated when upd is called.
-                    Case Chr$(8) 'backspace
-                    Case Else: win_Cat_Text = win_Cat_Text + __InKey 'Append keypress to window
-                End Select
+                If w(win_Cat).Z = 0 Then
+                    Select Case __inKey '__inKey is updated when upd is called.
+                        Case Chr$(8) 'backspace
+                        Case Else: win_Cat_Text = win_Cat_Text + __inKey 'Append keypress to window
+                    End Select
 
-                If (w(win).W > 8) And (w(win).H > 8) Then
-                    FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
-                    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    If (w(win).W > 8) And (w(win).H > 8) Then
+                        FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
+                        w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    End If
+
+                    Dest w(win_Cat).IH
+                    Print win_Cat_Text;
                 End If
-
-                Dest w(win_Cat).IH
-                Print win_Cat_Text;
 
 
 
@@ -117,7 +119,7 @@ Sub upd Static
     Shared __image_Screen As Long
     Shared winZOrder() As Byte
 
-    __InKey$ = InKey$
+    __inKey$ = InKey$
     Dest Display 'Make sure we're writing to the screen!
 
     If (Resize) Then 'If the program window is resizing.
@@ -135,7 +137,7 @@ Sub upd Static
     fixFocusArray
 
     Dim i As Integer
-    For i = LBound(winzorder) To UBound(winzorder)
+    For i = UBound(winzorder) To LBound(winzorder) Step -1 '#### TODO: Figure out why winZOrder is going backwards
         If winZOrder(i) <> 0 Then
             putWin w(winZOrder(i))
         End If
@@ -164,7 +166,7 @@ Function newWin% (template As winType)
 
     Next
 
-    ReDim Preserve w(UBound(w) + 1) As winType
+    ReDim Preserve w(LBound(w) To UBound(w) + 1) As winType
     w(UBound(w)) = template
     newWin% = UBound(w)
 End Function
@@ -232,26 +234,28 @@ Sub updateMouse Static
     For i = LBound(w) To UBound(w)
         If w(i).T = "" Then Continue
         If (MouseX >= w(i).X) And (MouseY <= (w(i).X + w(i).W)) _
-       And (MouseY >= w(i).Y) And (MouseY <= (w(i).Y + 18)) Then ' If mouse is over titlebar
+        And(MouseY >= w(i).Y) And (MouseY <= (w(i).Y + 18)) Then ' If mouse is over titlebar
 
-
-            If MouseButton(1) And (__InKey$ = " ") Then 'Open options (Middle click)
+            If MouseButton(1) And (__inKey$ = " ") Then 'Open options (Middle click)
                 If optMenu = 0 Then
                     __template_WinOptions.IH = CopyImage(__template_WinOptions.IH, 32) 'So that when we inevitably freeWin the option menu, we dont erase the template's image
                     __template_WinOptions.X = w(i).X
                     __template_WinOptions.Y = w(i).Y
+
                     optMenu = newWin(__template_WinOptions)
-                    __focusedWindow = optMenu
+                    grabFocus optMenu
+
                     optWin = i
                 End If
 
-            ElseIf MouseButton(1) Or MouseButton(2) Then __focusedWindow = i
+            ElseIf (MouseButton(1) Or MouseButton(2)) And (__focusedWindow <> i) Then
+                grabFocus i
             End If
 
         End If
     Next
 
-    If (optMenu <> 0) And (__InKey$ <> " ") Then
+    If (optMenu <> 0) And (__inKey$ <> " ") Then
         If MouseButton(1) Then
             If mouseIsOver(optMenu) Then
                 freeWin optWin
@@ -294,11 +298,13 @@ Sub fixFocusArray
         If w(i).T = "" Then winZOrder(0) = i
     Next
 
-    For i = LBound(w) To UBound(w)
+    For i = UBound(w) To LBound(w) Step -1 'Prioritize newer windows by going backwards
+
         Do While ((w(i).Z = __focusedWindow) And (i <> __focusedWindow)) Or (winZOrder(w(i).Z) <> 0)
             w(i).Z = w(i).Z + 1
         Loop
         winZOrder(w(i).Z) = i
+
     Next
 End Sub
 
@@ -307,3 +313,17 @@ Function mouseIsOver` (win As Integer)
     Shared w() As winType
     mouseIsOver` = ((MouseX >= w(win).X) And (MouseX <= (w(win).X + w(win).W)) And (MouseY >= w(win).Y) And (MouseY <= (w(win).Y + w(win).H)))
 End Function
+
+
+
+Sub grabFocus (win As Integer)
+    Shared w() As winType
+    Dim i As Integer
+    For i = LBound(w) To UBound(w)
+
+        If i = win Then w(i).Z = 0 _
+                   Else w(i).Z = w(i).Z + 1
+
+    Next
+    __focusedWindow = win
+End Sub

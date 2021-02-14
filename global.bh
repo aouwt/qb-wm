@@ -28,7 +28,7 @@ Dim __image_Background As Long
 Dim __image_Screen As Long
 Rem DIM __image_Cursor AS LONG 'For another day...
 
-Dim Shared __InKey As String
+Dim Shared __inKey As String
 Dim Shared __focusedWindow As Integer
 
 
