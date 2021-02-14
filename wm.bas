@@ -6,9 +6,11 @@ Dim win_Img As Integer
 Dim win_Cat As Integer, win_Cat_Text As String
 
 temp = __template_Win
+temp.X = 50
 temp.IH = NewImage(320, 240, 32)
 temp.T = "Log"
-win_Log = newWin(temp)
+win_Log = newWin(temp) 'this does nothing...
+win_Log = newWin(temp) '...wtf????
 
 temp = __template_Win
 temp.X = 200
@@ -256,6 +258,8 @@ Sub updateMouse Static
                 grabFocus i
             End If
 
+        ElseIf (mouseIsOver(i) = 0) And (MouseButton(1)) Then __focusedWindow = 0
+        ElseIf (mouseIsOver(i)) And (MouseButton(1)) Then grabFocus i
         End If
 
 
