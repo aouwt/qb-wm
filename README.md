@@ -1,7 +1,7 @@
 # qb-wm
 A (very basic <sup><small>no pun intended</small></sup>) window manager, written in [QB64](https://qb64.org)
 
-<br />
+![gif of it doin stuff](https://raw.githubusercontent.com/all-other-usernames-were-taken/all-other-usernames-were-taken/main/files/qb-wm.gif)
 
 Due to QB64 restrictions, it does not currently support X/Wayland/etc. However, I do intend to make a *thing* that can interface to programs using QB64's TCP functionality, but that would be in the far future. As it stands now, it's merely a proof-of-concept, and not practical by any means.
 
