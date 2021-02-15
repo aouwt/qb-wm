@@ -14,7 +14,7 @@ Simply open `wm.bas` in the [QB64 IDE](https://github.com/QB64Team/qb64/releases
 
 <br />
 
-`back.png` is the background, and `image2.jpg` is the image displayed on the "Test" window. You can change these out with whatever you want.
+`back.png` is the background, and `image.jpg` is the image displayed on the "Test" window. You can change these out with whatever you want.
 
 *Disclaimer: I do **NOT** own the rights to these images. They're simply placeholders for now.*
 
@@ -22,13 +22,12 @@ Simply open `wm.bas` in the [QB64 IDE](https://github.com/QB64Team/qb64/releases
 
 Controls are:
 
-- Click and drag to move a window.
-- Click a window to get it's focus.
-- Right click and drag to resize.
-- Space adds a new window.
-- Escape removes the current focused window.
-
-Although that's about to change with a pull request that is on it's way.
+- Click and drag to move a window,
+- click a window's titlebar to get it's focus,
+- right click and drag to resize,
+- when the log window is in focus, pressing <kbd>Shift</kbd>+<kbd>=</kpd> spawns a new window,
+- pressing <kbd>Space</kbd> while left-clicking the title bar opens a context menu, that when clicked, closes the selected window, and
+- the "Text editor" window is a simple text editor, as the name implies.
 
 ---
 
