@@ -15,6 +15,9 @@ Type winType 'Window type definition. QB64 is not object-oriented, so we have to
 
 End Type
 
+'Constants
+Const True = -1
+Const False = 0
 
 'Initialize variables
 Rem $Dynamic
@@ -45,12 +48,22 @@ __image_Background = LoadImage("images/back.png", 32)
 __image_Screen = NewImage(640, 480, 32)
 
 '...and the FONTs
-__font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14)
-__font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12)
-__font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND")
+$If LINUX Then
+    __font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14)
+    __font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12)
+    __font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND")
 
-__font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12)
-__font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12)
+    __font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12)
+    __font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12)
+$Else
+    'TODO: integrate Windows & MacOS fonts
+    __font_Header = 16
+    __font_Body = 14
+    __font_Mono = 14
+
+    __font_Serif = 14
+    __font_Sans = 14
+$End If
 
 __screenFont = __font_Header
 
@@ -81,6 +94,7 @@ __template_WinOptions.FH = __font_Body
 
 'Initialize the WinOptions template's contents
 Dest __template_WinOptions.IH
+Font __template_WinOptions.FH
 PrintString (0, 0), "Close"
 
 

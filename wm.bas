@@ -53,16 +53,20 @@ Do
 
             Case win_Cat 'Text editor window
                 If w(win_Cat).Z = 0 Then
-                    Select Case __inKey '__inKey is updated when upd is called.
-                        Case Chr$(8): win_Cat_Text = Left$(win_Cat_Text, Len(win_Cat_Text) - 1) 'backspace
-                        Case Else: win_Cat_Text = win_Cat_Text + __inKey 'Append keypress to window
-                    End Select
 
-                    If (w(win).W > 8) And (w(win).H > 8) Then
-                        FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
-                        w(win).IH = NewImage(w(win).W, w(win).H, 32)
-                        Font w(win).FH, w(win).IH
-                    End If
+                    Do Until __inKey = ""
+                        Select Case __inKey '__inKey is updated when upd is called.
+                            Case Chr$(8): win_Cat_Text = Left$(win_Cat_Text, Len(win_Cat_Text) - 1) 'backspace
+                            Case Else: win_Cat_Text = win_Cat_Text + __inKey 'Append keypress to window
+                        End Select
+                        __inKey = InKey$
+                    Loop
+
+                    'If (w(win).W > 8) And (w(win).H > 8) Then
+                    '    FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
+                    '    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    '    Font w(win).FH, w(win).IH
+                    'End If
 
                     Dest w(win_Cat).IH
                     Print win_Cat_Text;
@@ -250,6 +254,7 @@ Sub updateMouse Static
 
     Dim optMenu As Integer, optWin As Integer
     Dim mLockX As Single, mLockY As Single 'Or as I like to call it, mmmlocks and mmmlockie
+    Dim mouseLatch As Bit
 
     Dim win As Integer, i As Integer
     For win = UBound(winZOrder) To LBound(winZOrder) Step -1
@@ -270,14 +275,18 @@ Sub updateMouse Static
                     grabFocus optMenu
 
                     optWin = i
+                    mouseLatch = True
                 End If
 
-            ElseIf (MouseButton(1) Or MouseButton(2)) And (__focusedWindow <> i) Then
+            ElseIf (MouseButton(1) Or MouseButton(2)) And (mouseLatch = False) Then
                 grabFocus i
+                mouseLatch = True
+
+            ElseIf (__focusedWindow = i) And (Not MouseButton(1)) Then mouseLatch = False
             End If
 
-            'ElseIf (mouseIsOver(i) = 0) And (MouseButton(1)) Then __focusedWindow = 0
-            'ElseIf (mouseIsOver(i)) And (MouseButton(1)) Then grabFocus i
+            Rem ElseIf (mouseIsOver(i) = false) And (MouseButton(1)) Then __focusedWindow = 0
+            Rem ElseIf (mouseIsOver(i)) And (MouseButton(1)) Then grabFocus i
         End If
 
 
