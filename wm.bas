@@ -1,5 +1,7 @@
 '$INCLUDE: './global.bh'
 
+$Let DEBUG = TRUE
+
 Dim temp As winType
 Dim win_Log As Integer
 Dim win_Img As Integer
@@ -37,7 +39,8 @@ Do
 
 
             Case win_Log 'Log window
-                'logp "" 'Empty input just refreshes the window
+                If w(win).NeedsRefresh Then logp ""
+
                 If (w(win_Log).Z = 0) And (__inKey = "+") And (otherWin = 0) Then
                     temp = __template_Win
                     temp.IH = NewImage(640, 480, 32)
@@ -62,13 +65,14 @@ Do
                         __inKey = InKey$
                     Loop
 
-                    'If (w(win).W > 8) And (w(win).H > 8) Then
-                    '    FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
-                    '    w(win).IH = NewImage(w(win).W, w(win).H, 32)
-                    '    Font w(win).FH, w(win).IH
-                    'End If
+                    If w(win).NeedsRefresh Then
+                        FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
+                        w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                        Font w(win).FH, w(win).IH
+                    End If
 
                     Dest w(win_Cat).IH
+                    Cls , RGBA32(0, 0, 0, 0)
                     Print win_Cat_Text;
                 End If
 
@@ -110,16 +114,17 @@ Loop
 
 Sub putWin (w As winType)
     Shared __screenFont As Long
+
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
 
     If w.Z = 0 Then _
              Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 200), BF _
-        Else Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64), BF
+        Else Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64 ), BF
 
     Color RGBA32(255, 255, 255, 255), RGBA32(0, 0, 0, 16) ' Make the title transparent
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
-    PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1)-Step(w.W, w.H), w.IH, , , Smooth ' Put the contents of the window down
+    PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1)-Step(w.W, w.H), w.IH ' Put the contents of the window down
 
     Rem If w.Z = 0 Then Line (w.X + 1, w.Y + 17)-Step(w.W, w.H), RGBA32(0, 0, 0, 127), BF 'Overlay. Disabled for now due to speed.
 End Sub
@@ -175,6 +180,11 @@ Function newWin% (template As winType)
 
         If (w(i).IH = 0) Then
             newWin% = i
+
+            $If DEBUG Then
+                template.T = template.T + " (" + LTrim$(Str$(i)) + ")"
+            $End If
+
             w(i) = template
             logp "INFO> newWin: Empty slot " + Str$(i) + " now holds window with image handle of " + Str$(w(i).IH)
             Exit Function
@@ -183,6 +193,11 @@ Function newWin% (template As winType)
     Next
 
     ReDim Preserve w(LBound(w) To UBound(w) + 1) As winType
+
+    $If DEBUG Then
+        template.T = template.T + " (" + LTrim$(Str$(UBound(w))) + ")"
+    $End If
+
     w(UBound(w)) = template
     newWin% = UBound(w)
     logp "INFO> newWin: Extending w() to " + Str$(i) + " for window with image handle of " + Str$(w(i).IH)
@@ -257,13 +272,12 @@ Sub updateMouse Static
     Dim mouseLatch As Bit
 
     Dim win As Integer, i As Integer
-    For win = UBound(winZOrder) To LBound(winZOrder) Step -1
+    For win = LBound(winZOrder) To UBound(winZOrder)
         i = winZOrder(win)
         If i = 0 Then Continue
         If w(i).T = "" Then Continue
 
-        If (MouseX >= w(i).X) And (MouseY <= (w(i).X + w(i).W)) _
-        And(MouseY >= w(i).Y) And (MouseY <= (w(i).Y + FontHeight(__screenFont) + 2)) Then ' If mouse is over titlebar
+        If mouseIsOver(i) Then
 
             If MouseButton(1) And (__inKey$ = " ") Then 'Open options (Middle click)
                 If optMenu = 0 Then
@@ -282,7 +296,7 @@ Sub updateMouse Static
                 grabFocus i
                 mouseLatch = True
 
-            ElseIf (__focusedWindow = i) And (Not MouseButton(1)) Then mouseLatch = False
+            ElseIf (__focusedWindow = i) And (Not MouseButton(1)) And (Not MouseButton(2)) Then mouseLatch = False
             End If
 
             Rem ElseIf (mouseIsOver(i) = false) And (MouseButton(1)) Then __focusedWindow = 0
@@ -305,15 +319,20 @@ Sub updateMouse Static
         End If
     End If
 
-    If MouseButton(1) Then 'Move (Left click)
-        w(__focusedWindow).X = w(__focusedWindow).X + (MouseX - mLockX)
-        w(__focusedWindow).Y = w(__focusedWindow).Y + (MouseY - mLockY)
+    If __focusedWindow Then
+        If MouseButton(1) Then 'Move (Left click)
+            w(__focusedWindow).X = w(__focusedWindow).X + (MouseX - mLockX)
+            w(__focusedWindow).Y = w(__focusedWindow).Y + (MouseY - mLockY)
 
-    ElseIf MouseButton(2) Then 'Resize (Right click)
-        w(__focusedWindow).W = w(__focusedWindow).W + (MouseX - mLockX)
-        w(__focusedWindow).H = w(__focusedWindow).H + (MouseY - mLockY)
+        ElseIf MouseButton(2) Then 'Resize (Right click)
+            w(__focusedWindow).W = w(__focusedWindow).W + (MouseX - mLockX)
+            w(__focusedWindow).H = w(__focusedWindow).H + (MouseY - mLockY)
 
-    End If
+        ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then _
+                 w(__focusedWindow).NeedsRefresh = True  _
+            Else w(__focusedWindow).NeedsRefresh = False
+
+    End If: End If
 
     mLockX = MouseX
     mLockY = MouseY
@@ -370,8 +389,8 @@ Sub grabFocus (win As Integer)
     Dim i As Integer
     For i = LBound(w) To UBound(w)
 
-        If i = win Then w(i).Z = 0 _
-                   Else w(i).Z = w(i).Z + 1
+    If i = win Then w(i).Z = 0 _
+    Else w(i).Z = w(i).Z + 1
 
     Next
     __focusedWindow = win
