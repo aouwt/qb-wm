@@ -1,6 +1,6 @@
 '$INCLUDE: './global.bh'
 
-'$Let HW = FALSE
+$Let HW = FALSE
 
 Dim temp As winType
 Dim win_Log As Integer
