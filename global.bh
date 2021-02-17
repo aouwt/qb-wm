@@ -2,6 +2,7 @@ $NoPrefix
 $Resize:On
 Option Explicit
 
+Print "Initializing..."
 Type winType 'Window type definition. QB64 is not object-oriented, so we have to use user types instead.
 
     IH As Long '            Image handle. A value of 0 indicates that this is an open window handle.
@@ -25,6 +26,7 @@ $Let FALSE = 0
 'Initialize variables
 Rem $Dynamic
 Dim w(1 To 1) As winType
+Rem $static
 Dim winZOrder(0 To 255) As Byte
 
 Dim Shared __template_Win As winType
@@ -39,6 +41,7 @@ Dim Shared __font_Serif As Long
 
 Dim __image_Background As Long
 Dim __image_Screen As Long
+Dim __image_ScreenBuffer As Long
 
 Dim __screenFont As Long
 
@@ -46,18 +49,24 @@ Dim Shared __inKey As String
 Dim Shared __focusedWindow As Integer
 
 
+Print "...Images:"
 'Initialize the IMAGEs...
-__image_Background = LoadImage("images/back.png", 32)
-__image_Screen = NewImage(640, 480, 32)
+__image_Background = LoadImage("images/back.png", 32): Print , "Background: "; __image_Background
+__image_Screen = NewImage(640, 480, 32): Print , "Screen: "; __image_Screen
+$If HW Then
+    __image_ScreenBuffer = CopyImage(__image_Screen, 33): Print , "ScreenBuffer: "; __image_ScreenBuffer
+$End If
 
+
+Print "...Fonts:"
 '...and the FONTs
 $If LINUX Then
-    __font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14)
-    __font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12)
-    __font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND")
+    __font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14): Print , "Header: "; __font_Header
+    __font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12): Print , "Body: "; __font_Body
+    __font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND"): Print , "Mono: "; __font_Mono
 
-    __font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12)
-    __font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12)
+    __font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12): Print , "Serif: "; __font_Serif
+    __font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12): Print , "Sans: "; __font_Sans
 $Else
     'TODO: integrate Windows & MacOS fonts
     __font_Header = 16
@@ -70,7 +79,7 @@ $End If
 
 __screenFont = __font_Header
 
-
+Print "...Templates:"
 'Initialize the window templates
 __template_Win.T = "Untitled window"
 __template_Win.W = 320
@@ -79,6 +88,7 @@ __template_Win.Z = 0
 __template_Win.IH = 0
 __template_Win.FH = __font_Body
 __template_Win.NeedsRefresh = False
+Print , "Win"
 
 __template_Overlay.T = ""
 __template_Overlay.W = 120
@@ -87,6 +97,7 @@ __template_Overlay.Z = 0
 __template_Overlay.IH = 0
 __template_Overlay.FH = __font_Body
 __template_Overlay.NeedsRefresh = False
+Print , "Overlay"
 
 __template_WinOptions.T = ""
 __template_WinOptions.W = 120
@@ -95,17 +106,23 @@ __template_WinOptions.Z = 0
 __template_WinOptions.IH = NewImage(120, 60, 32)
 __template_WinOptions.FH = __font_Body
 __template_WinOptions.NeedsRefresh = False
-
+Print , "WinOptions"
 
 
 'Initialize the WinOptions template's contents
+Print , "WinOptions"
 Dest __template_WinOptions.IH
 Font __template_WinOptions.FH
 PrintString (0, 0), "Close"
 
-
 'And finally, initialize the SCREEN.
-Font __screenFont, __image_Screen
 Screen __image_Screen
 
-Dest Display
+$If HW Then
+    DisplayOrder Hardware
+    Dest __image_ScreenBuffer
+    Font __screenFont, __image_ScreenBuffer
+$Else
+    Dest Display
+    Font __screenFont, __image_Screen
+$End If

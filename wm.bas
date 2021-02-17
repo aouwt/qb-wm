@@ -1,6 +1,6 @@
 '$INCLUDE: './global.bh'
 
-$Let DEBUG = TRUE
+'$Let HW = FALSE
 
 Dim temp As winType
 Dim win_Log As Integer
@@ -115,6 +115,8 @@ Loop
 Sub putWin (w As winType)
     Shared __screenFont As Long
 
+    Line (w.X + 5, w.Y + 5)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 10), BF
+
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
 
     If w.Z = 0 Then _
@@ -124,9 +126,9 @@ Sub putWin (w As winType)
     Color RGBA32(255, 255, 255, 255), RGBA32(0, 0, 0, 16) ' Make the title transparent
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
-    PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1)-Step(w.W, w.H), w.IH ' Put the contents of the window down
+    PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1), w.IH, , (0, 0)-Step(w.W, w.H) ' Put the contents of the window down
 
-    Rem If w.Z = 0 Then Line (w.X + 1, w.Y + 17)-Step(w.W, w.H), RGBA32(0, 0, 0, 127), BF 'Overlay. Disabled for now due to speed.
+    If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 127), BF
 End Sub
 
 
@@ -137,20 +139,25 @@ Sub upd Static
     Shared w() As winType
     Shared __image_Background As Long
     Shared __image_Screen As Long
+    Shared __image_ScreenBuffer As Long
     Shared __screenFont As Long
     Shared winZOrder() As Byte
 
     __inKey$ = InKey$
-    Dest Display 'Make sure we're writing to the screen!
 
-    If (Resize) Then 'If the program window is resizing.
-        Screen 0 ' It is highy reccomended to free the screen's image handle from the screen before freeing the image itself.
-        FreeImage __image_Screen
-        __image_Screen = NewImage(ResizeWidth, ResizeHeight, 32) 'Create the new image...
-        Screen __image_Screen '...and slap it down on the screen!
-        Font __screenFont, Display
-    End If
+    $If HW Then
+        Dest __image_ScreenBuffer
+    $Else
+        If (Resize) Then 'If the program window is resizing
+            Screen 0
+            FreeImage __image_Screen
+            __image_Screen = NewImage(ResizeWidth, ResizeHeight, 32)
+            Screen __image_Screen
+            Font __screenFont, __image_Screen
+        End If
 
+        Dest Display
+    $End If
 
     PutImage , __image_Background 'Put the background image down on top of the previous frame's contents so we don't paint the screen. (although that would be noice...)
     PrintString (0, 0), "FPS:" + Str$(fps) 'the fps function is fps the amount of times it's called in a second.
@@ -164,6 +171,9 @@ Sub upd Static
         End If
     Next
 
+    $If HW Then
+        PutImage , __image_ScreenBuffer, __image_Screen
+    $End If
 End Sub
 
 
@@ -181,9 +191,7 @@ Function newWin% (template As winType)
         If (w(i).IH = 0) Then
             newWin% = i
 
-            $If DEBUG Then
-                template.T = template.T + " (" + LTrim$(Str$(i)) + ")"
-            $End If
+            template.T = template.T + " (" + LTrim$(Str$(i)) + ")"
 
             w(i) = template
             logp "INFO> newWin: Empty slot " + Str$(i) + " now holds window with image handle of " + Str$(w(i).IH)
@@ -194,9 +202,7 @@ Function newWin% (template As winType)
 
     ReDim Preserve w(LBound(w) To UBound(w) + 1) As winType
 
-    $If DEBUG Then
-        template.T = template.T + " (" + LTrim$(Str$(UBound(w))) + ")"
-    $End If
+    template.T = template.T + " (" + LTrim$(Str$(UBound(w))) + ")"
 
     w(UBound(w)) = template
     newWin% = UBound(w)
@@ -328,9 +334,9 @@ Sub updateMouse Static
             w(__focusedWindow).W = w(__focusedWindow).W + (MouseX - mLockX)
             w(__focusedWindow).H = w(__focusedWindow).H + (MouseY - mLockY)
 
-        ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then _
-                 w(__focusedWindow).NeedsRefresh = True  _
-            Else w(__focusedWindow).NeedsRefresh = False
+    ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then _
+    w(__focusedWindow).NeedsRefresh = True  _
+    Else w(__focusedWindow).NeedsRefresh = False
 
     End If: End If
 
@@ -348,8 +354,7 @@ Sub fixFocusArray
     Shared winZOrder() As Byte
     Shared w() As winType
 
-
-    ReDim winZOrder(0 To 255) As Byte 'Since we're not using PRESERVE, it erases the contents of winZOrder as well
+    Erase winZOrder
 
     Dim i As Integer
     'For i = LBound(w) To UBound(w)
