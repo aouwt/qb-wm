@@ -5,7 +5,7 @@
 Dim temp As winType
 Dim win_Log As Integer
 Dim win_Img As Integer
-Dim win_Cat As Integer, win_Cat_Text As String
+Dim win_Cat As Integer, win_Cat_Text As String, win_Img_Image As Long
 Dim otherWin As Integer
 
 temp = __template_Win
@@ -24,9 +24,11 @@ win_Cat = newWin(temp)
 
 temp = __template_Win
 temp.X = 100
-temp.IH = LoadImage("images/image.jpg", 32)
+temp.IH = NewImage(temp.W, temp.H, 32)
 temp.T = "Test"
 win_Img = newWin(temp)
+
+win_Img_Image = LoadImage("images/image.jpg", 32)
 
 logp "INFO> main routine: Ready"
 Dim win As Integer
@@ -51,6 +53,11 @@ Do
 
 
             Case win_Img 'The image window doesn't change, so we dont need to do anything.
+                If w(win).NeedsRefresh Then
+                    FreeImage w(win).IH
+                    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    PutImage , win_Img_Image, w(win).IH
+                End If
 
 
 
@@ -115,20 +122,22 @@ Loop
 Sub putWin (w As winType)
     Shared __screenFont As Long
 
-    Line (w.X + 5, w.Y + 5)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 10), BF
+    Line (w.X - 2, w.Y - 2)-Step(w.W + 10, w.H + FontHeight(__screenFont) + 10), RGBA32(0, 0, 0, 10), BF
 
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
 
-    If w.Z = 0 Then _
-             Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 200), BF _
-        Else Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64 ), BF
+    If w.Z = 0 Then
+        Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 200), BF
+    Else
+        Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64), BF
+    End If
 
     Color RGBA32(255, 255, 255, 255), RGBA32(0, 0, 0, 16) ' Make the title transparent
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
     PutImage (w.X + 1, w.Y + FontHeight(__screenFont) + 1), w.IH, , (0, 0)-Step(w.W, w.H) ' Put the contents of the window down
 
-    If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 127), BF
+    If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + FontHeight(__screenFont) + 2), RGBA32(0, 0, 0, 64), BF
 End Sub
 
 
@@ -334,9 +343,10 @@ Sub updateMouse Static
             w(__focusedWindow).W = w(__focusedWindow).W + (MouseX - mLockX)
             w(__focusedWindow).H = w(__focusedWindow).H + (MouseY - mLockY)
 
-    ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then _
-    w(__focusedWindow).NeedsRefresh = True  _
-    Else w(__focusedWindow).NeedsRefresh = False
+        ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then
+            w(__focusedWindow).NeedsRefresh = True
+        Else
+            w(__focusedWindow).NeedsRefresh = False
 
     End If: End If
 
@@ -362,6 +372,7 @@ Sub fixFocusArray
     'Next
 
     For i = UBound(w) To LBound(w) Step -1 'Prioritize newer windows by going backwards
+        If w(i).IH = 0 Then Continue
         If i = __focusedWindow Then
             w(i).Z = 0
             winZOrder(0) = i
