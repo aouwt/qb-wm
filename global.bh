@@ -14,6 +14,8 @@ Type winType 'Window type definition. QB64 is not object-oriented, so we have to
     W As Unsigned Integer ' Width
     H As Unsigned Integer ' Height
     NeedsRefresh As Byte '  Set to -1 if the window, well, needs refreshed. Preferrably would be BIT, but unfortunately, QB64 can't have BITs in UDTs
+    MX As Integer '         Mouse X position relative to the window
+    MY As Integer '         Mouse Y position relative to the window
 
 End Type
 
@@ -23,10 +25,12 @@ Const False = 0
 $Let TRUE = -1
 $Let FALSE = 0
 
+'$Let HW = FALSE
+
 'Initialize variables
 Rem $Dynamic
 Dim w(1 To 1) As winType
-Rem $static
+Rem $Static
 Dim winZOrder(0 To 255) As Byte
 
 Dim Shared __template_Win As winType
@@ -42,8 +46,10 @@ Dim Shared __font_Serif As Long
 Dim __image_Background As Long
 Dim __image_Screen As Long
 Dim __image_ScreenBuffer As Long
+Dim __image_Cursor As Long
 
-Dim __screenFont As Long
+Dim __param_ScreenFont As Long
+Dim __param_TBHeight As Unsigned Integer
 
 Dim Shared __inKey As String
 Dim Shared __focusedWindow As Integer
@@ -53,6 +59,7 @@ Print "...Images:"
 'Initialize the IMAGEs...
 __image_Background = LoadImage("images/back.png", 32): Print , "Background: "; __image_Background
 __image_Screen = NewImage(640, 480, 32): Print , "Screen: "; __image_Screen
+__image_Cursor = LoadImage("images/cursor.png", 33): Print , "Cursor: "; __image_Cursor
 $If HW Then
     __image_ScreenBuffer = CopyImage(__image_Screen, 33): Print , "ScreenBuffer: "; __image_ScreenBuffer
 $End If
@@ -77,7 +84,7 @@ $Else
     __font_Sans = 14
 $End If
 
-__screenFont = __font_Header
+__param_ScreenFont = __font_Header
 
 Print "...Templates:"
 'Initialize the window templates
@@ -87,7 +94,7 @@ __template_Win.H = 240
 __template_Win.Z = 0
 __template_Win.IH = 0
 __template_Win.FH = __font_Body
-__template_Win.NeedsRefresh = False
+__template_Win.NeedsRefresh = True
 Print , "Win"
 
 __template_Overlay.T = ""
@@ -96,7 +103,7 @@ __template_Overlay.H = 60
 __template_Overlay.Z = 0
 __template_Overlay.IH = 0
 __template_Overlay.FH = __font_Body
-__template_Overlay.NeedsRefresh = False
+__template_Overlay.NeedsRefresh = True
 Print , "Overlay"
 
 __template_WinOptions.T = ""
@@ -105,24 +112,29 @@ __template_WinOptions.H = 60
 __template_WinOptions.Z = 0
 __template_WinOptions.IH = NewImage(120, 60, 32)
 __template_WinOptions.FH = __font_Body
-__template_WinOptions.NeedsRefresh = False
+__template_WinOptions.NeedsRefresh = True
 Print , "WinOptions"
 
 
 'Initialize the WinOptions template's contents
-Print , "WinOptions"
+Print "WinOptions"
 Dest __template_WinOptions.IH
 Font __template_WinOptions.FH
 PrintString (0, 0), "Close"
 
+__param_TBHeight = FontHeight(__param_ScreenFont) + 2
+
+
+Sleep
 'And finally, initialize the SCREEN.
 Screen __image_Screen
+MouseHide
 
 $If HW Then
-    DisplayOrder Hardware
+    'DisplayOrder Hardware , Software
     Dest __image_ScreenBuffer
-    Font __screenFont, __image_ScreenBuffer
+    Font __param_screenFont, __image_ScreenBuffer
 $Else
     Dest Display
-    Font __screenFont, __image_Screen
+    Font __param_ScreenFont, __image_Screen
 $End If
