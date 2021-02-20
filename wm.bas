@@ -1,4 +1,6 @@
 '$INCLUDE: './global.bh'
+Declare Library "/home/hmstve/git/inform/internal/c/mingw32/opt/include/X11/Xlib"
+End Declare
 
 $Let HW = FALSE
 $Let LIGHT = FALSE
