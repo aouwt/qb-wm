@@ -130,7 +130,7 @@ Sleep
 Screen __image_Screen
 MouseHide
 
-$If HW Then
+$If HW = TRUE Then
     'DisplayOrder Hardware , Software
     Dest __image_ScreenBuffer
     Font __param_screenFont, __image_ScreenBuffer

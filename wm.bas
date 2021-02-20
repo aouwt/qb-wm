@@ -1,6 +1,7 @@
 '$INCLUDE: './global.bh'
 
-'$Let HW = TRUE
+$Let HW = FALSE
+$Let LIGHT = FALSE
 
 Dim temp As winType
 Dim win_Log As Integer
@@ -27,13 +28,12 @@ Do
 
 
             Case win_Log 'Log window
-                If w(win).NeedsRefresh Then logp ""
+                If w(win).NeedsRefresh Then resizeWin win_Log: logp ""
 
 
             Case win_Img
                 If w(win).NeedsRefresh Then
-                    FreeImage w(win).IH
-                    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+                    resizeWin win_Img
                     PutImage , win_Img_Image, w(win).IH
                 End If
 
@@ -50,11 +50,7 @@ Do
                         __inKey = InKey$
                     Loop
 
-                    If w(win).NeedsRefresh Then
-                        FreeImage w(win).IH 'Resize the window. Not required every frame, but it should be fine.
-                        w(win).IH = NewImage(w(win).W, w(win).H, 32)
-                        Font w(win).FH, w(win).IH
-                    End If
+                    If w(win).NeedsRefresh Then resizeWin win
 
                     Dest w(win_Cat).IH
                     Cls , 0
@@ -62,13 +58,15 @@ Do
                 End If
 
 
+
             Case win_Launcher
+                If w(win).NeedsRefresh Then resizeWin win
+                Dest w(win).IH
+                Cls
+                If win_Log Then PrintString (0, 0), "Close log" Else PrintString (0, 0), "Open log"
+                If win_Cat Then PrintString (0, 16), "Close text editor" Else PrintString (0, 16), "Open text editor"
+                If win_Img Then PrintString (0, 32), "Close image" Else PrintString (0, 32), "Open image"
                 If w(win_Launcher).Z = 0 Then
-                    Dest w(win).IH
-                    Cls
-                    If win_Log Then PrintString (0, 0), "Close log" Else PrintString (0, 0), "Open log"
-                    If win_Cat Then PrintString (0, 16), "Close text editor" Else PrintString (0, 16), "Open text editor"
-                    If win_Img Then PrintString (0, 32), "Close image" Else PrintString (0, 32), "Open image"
                     If MouseButton(1) Then
                         Select Case w(win).MY
                             Case 0 TO 16
@@ -145,30 +143,45 @@ Loop
 
 
 
-
-Sub putWin (w As winType)
+$If LIGHT = TRUE Then
+    Sub putWin (w As winType)
     Shared __param_TBHeight As Unsigned Integer
 
-    'For speed
-    Rem RGBA32(0, 0, 0, 10)  = &H0A000000
-    Rem RGBA32(0, 0, 0, 200) = &HC8000000
-    Rem RGBA32(0, 0, 0, 64)  = &H40000000
-
-    Line (w.X - 2, w.Y - 2)-Step(w.W + 6, w.H + __param_TBHeight + 6), &H0A000000, BF
-
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
+    _DontBlend
 
-    If w.Z = 0 Then
-        Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HC8000000, BF
-    End If
+    If w.Z = 0 Then  _
+    Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF000000, BF _
+    Else Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF999999, BF
 
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
     PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H) ' Put the contents of the window down
+    End Sub
+$Else
+    Sub putWin (w As winType)
+        Shared __param_TBHeight As Unsigned Integer
 
-    If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &H40000000, BF
-End Sub
+        'For speed
+        Rem RGBA32(0, 0, 0, 10)  = &H0A000000
+        Rem RGBA32(0, 0, 0, 200) = &HC8000000
+        Rem RGBA32(0, 0, 0, 64)  = &H40000000
 
+        Line (w.X - 2, w.Y - 2)-Step(w.W + 6, w.H + __param_TBHeight + 6), &H0A000000, BF 'Shadow
+
+        If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
+
+        If w.Z = 0 Then
+            Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HC8000000, BF 'Window backing
+        End If
+
+        PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
+
+        PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H), Smooth ' Put the contents of the window down
+
+        If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &H40000000, BF 'Dark overlay if not focused
+    End Sub
+$End If
 
 
 
@@ -184,7 +197,7 @@ Sub upd Static
 
     __inKey$ = InKey$
 
-    $If HW Then
+    $If HW = TRUE Then
         Dest __image_ScreenBuffer
     $Else
         If (Resize) Then 'If the program window is resizing
@@ -231,24 +244,20 @@ Function newWin% (template As winType)
     For i = LBound(w) To UBound(w)
 
         If (w(i).IH = 0) Then
-            newWin% = i
-
-            If template.T <> "" Then template.T = template.T + " (" + LTrim$(Str$(i)) + ")"
-
-            w(i) = template
             logp "INFO> newWin: Empty slot " + Str$(i) + " now holds window with image handle of " + Str$(w(i).IH)
-            Exit Function
+            GoTo e
         End If
 
     Next
-
     ReDim Preserve w(LBound(w) To UBound(w) + 1) As winType
-
-    If template.T <> "" Then template.T = template.T + " (" + LTrim$(Str$(UBound(w))) + ")"
-
-    w(UBound(w)) = template
-    newWin% = UBound(w)
+    i = UBound(w)
     logp "INFO> newWin: Extending w() to " + Str$(i) + " for window with image handle of " + Str$(w(i).IH)
+
+    e:
+    If template.T <> "" Then template.T = template.T + " (" + LTrim$(Str$(i)) + ")"
+    w(i) = template
+    If w(i).Z = 0 Then grabFocus i
+    newWin% = i
 End Function
 
 
@@ -267,10 +276,7 @@ Sub logp (s As String) Static
 
     If win_Log Then
         If w(win_Log).IH Then
-            FreeImage w(win_Log).IH
-            w(win_Log).IH = NewImage(w(win_Log).W, w(win_Log).H, 32)
             Dest w(win_Log).IH
-            Font w(win_Log).FH
 
             Print l;
 
@@ -426,6 +432,14 @@ End Sub
 
 
 
+Sub resizeWin (win As Integer)
+    Shared w() As winType
+    FreeImage w(win).IH
+    w(win).IH = NewImage(w(win).W, w(win).H, 32)
+    Font w(win).FH, w(win).IH
+End Sub
+
+
 
 
 Function mouseIsOver` (win As Integer)
@@ -445,4 +459,76 @@ Sub grabFocus (win As Integer)
         If i = win Then w(i).Z = 0 Else w(i).Z = w(i).Z + 1
     Next
     __focusedWindow = win
+End Sub
+
+
+
+
+Sub sendWin (w As winType, c As Long)
+    Dim i As _Unsigned _Byte
+    i = 0
+    Put #c, , i
+    Put #c, , w.X
+    Put #c, , w.Y
+    Put #c, , w.Z
+    Put #c, , w.W
+    Put #c, , w.H
+    Put #c, , w.NeedsRefresh
+    _Source w.IH
+
+    Dim x As Integer, y As Integer, clr As Long
+
+    x = _Width(w.IH)
+    Put #c, , x
+
+    y = _Height(w.IH)
+    Put #c, , y
+
+    For x = 0 To _Width(w.IH)
+        For y = 0 To _Height(w.IH)
+            clr = Point(x, y)
+            Put #c, , clr
+    Next y, x
+End Sub
+
+
+
+Sub getWin (c As Long)
+    Shared temp As winType
+    Dim i As _Unsigned _Byte
+    Do
+        i = 1
+        If LOF(c) Then Get #c, , i
+    Loop Until i = 0
+    Do: Loop Until LOF(c)
+    Get #c, , temp.X
+    Do: Loop Until LOF(c)
+    Get #c, , temp.Y
+    Do: Loop Until LOF(c)
+    Get #c, , temp.Z
+    Do: Loop Until LOF(c)
+    Get #c, , temp.W
+    Do: Loop Until LOF(c)
+    Get #c, , temp.H
+    Do: Loop Until LOF(c)
+    Get #c, , temp.NeedsRefresh
+
+    Dim x As Integer, y As Integer
+    Do: Loop Until LOF(c)
+    Get #c, , x
+
+    Do: Loop Until LOF(c)
+    Get #c, , y
+
+    If temp.IH = 0 Or temp.IH = -1 Then _FreeImage temp.IH
+    temp.IH = _NewImage(x, y, 32)
+    _Dest temp.IH
+
+    Dim clr As Long
+    For x = 0 To _Width(temp.IH)
+        For y = 0 To _Height(temp.IH)
+            Do: Loop Until LOF(c)
+            Get #c, , clr
+            PSet (x, y), clr
+    Next y, x
 End Sub
