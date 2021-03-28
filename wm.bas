@@ -1,7 +1,8 @@
 '$INCLUDE: './global.bh'
+$Checking:Off
 
 $Let HW = FALSE
-$Let LIGHT = FALSE
+$Let LIGHT = TRUE
 
 Dim temp As winType
 Dim win_Log As Integer
@@ -142,50 +143,50 @@ Loop
 
 
 
-
+'$Checking:Off
 $If LIGHT = TRUE Then
     Sub putWin (w As winType)
-    Shared __param_TBHeight As Unsigned Integer
+        Shared __param_TBHeight As Unsigned Integer
 
-    If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
-    _DontBlend
+        If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
+        _DontBlend
 
     If w.Z = 0 Then  _
     Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF000000, BF _
     Else Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF999999, BF
 
-    PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
+        PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
-    PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H) ' Put the contents of the window down
+        PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H) ' Put the contents of the window down
     End Sub
 $Else
     Sub putWin (w As winType)
-        Shared __param_TBHeight As Unsigned Integer
+    Shared __param_TBHeight As Unsigned Integer
 
-        'For speed
-        Rem RGBA32(0, 0, 0, 10)  = &H0A000000
-        Rem RGBA32(0, 0, 0, 200) = &HC8000000
-        Rem RGBA32(0, 0, 0, 64)  = &H40000000
+    'For speed
+    Rem RGBA32(0, 0, 0, 10)  = &H0A000000
+    Rem RGBA32(0, 0, 0, 200) = &HC8000000
+    Rem RGBA32(0, 0, 0, 64)  = &H40000000
 
-        Line (w.X - 2, w.Y - 2)-Step(w.W + 6, w.H + __param_TBHeight + 6), &H0A000000, BF 'Shadow
+    Line (w.X - 2, w.Y - 2)-Step(w.W + 6, w.H + __param_TBHeight + 6), &H0A000000, BF 'Shadow
 
-        If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
+    If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
 
-        If w.Z = 0 Then
-            Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HC8000000, BF 'Window backing
-        End If
+    If w.Z = 0 Then
+    Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HC8000000, BF 'Window backing
+    End If
 
-        PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
+    PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
-        PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H), Smooth ' Put the contents of the window down
+    PutImage (w.X + 1, w.Y + __param_TBHeight), w.IH, , (0, 0)-Step(w.W, w.H), Smooth ' Put the contents of the window down
 
-        If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &H40000000, BF 'Dark overlay if not focused
+    If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &H40000000, BF 'Dark overlay if not focused
     End Sub
 $End If
+'$Checking:On
 
 
-
-
+'$Checking:Off
 Sub upd Static
     Shared w() As winType
     Shared winZOrder() As Byte
@@ -229,13 +230,13 @@ Sub upd Static
         PutImage , __image_ScreenBuffer, __image_Screen
     $End If
 End Sub
+'$Checking:On
 
 
 
 
 
-
-
+'$Checking:Off
 Function newWin% (template As winType)
     Shared w() As winType
 
@@ -259,12 +260,12 @@ Function newWin% (template As winType)
     If w(i).Z = 0 Then grabFocus i
     newWin% = i
 End Function
+'$Checking:On
 
 
 
 
-
-
+'$Checking:Off
 Sub logp (s As String) Static
     Shared w() As winType
     Shared win_Log As Integer
@@ -284,7 +285,7 @@ Sub logp (s As String) Static
         End If
     End If
 End Sub
-
+'$Checking:On
 
 
 
@@ -313,8 +314,7 @@ End Sub
 
 
 
-
-
+'$Checking:Off
 Sub updateMouse Static
     Shared w() As winType
     Shared winZOrder() As Byte
@@ -397,8 +397,7 @@ Sub updateMouse Static
     mLockX = MouseX
     mLockY = MouseY
 End Sub
-
-
+'$Checking:On
 
 
 
