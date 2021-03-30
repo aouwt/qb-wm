@@ -7,6 +7,7 @@ Type winType 'Window type definition. QB64 is not object-oriented, so we have to
 
     IH As Long '            Image handle. A value of 0 indicates that this is an open window handle.
     FH As Long '            Font handle. Not really necessarry, as you can use _FONT() but it's useful when resizing
+    PM As Unsigned Byte '   _PRINTMODE
     T As String '           Title. Empty string means that the window is a overlay
     X As Integer '          X position. Should be Single but for some reason QB64 doesn't like virginity :(
     Y As Integer '          Y position
@@ -16,16 +17,25 @@ Type winType 'Window type definition. QB64 is not object-oriented, so we have to
     NeedsRefresh As Byte '  Set to -1 if the window, well, needs refreshed. Preferrably would be BIT, but unfortunately, QB64 can't have BITs in UDTs
     MX As Integer '         Mouse X position relative to the window
     MY As Integer '         Mouse Y position relative to the window
+    MS As Single '          Mouse scroll (relative to last refresh)
+    MAS As Single '      Mouse scroll (absolute)
 
 End Type
 
 'Constants
 Const True = -1
 Const False = 0
+Const __PM_KeepBackground = 1
+Const __PM_OnlyBackground = 2
+Const __PM_FillBackground = 3
 $Let TRUE = -1
 $Let FALSE = 0
 
-'$Let HW = FALSE
+
+$Let HW = FALSE
+$Let LIGHT = FALSE
+
+
 
 'Initialize variables
 Rem $Dynamic
@@ -60,20 +70,20 @@ Print "...Images:"
 __image_Background = LoadImage("images/back.png", 32): Print , "Background: "; __image_Background
 __image_Screen = NewImage(640, 480, 32): Print , "Screen: "; __image_Screen
 __image_Cursor = LoadImage("images/cursor.png", 33): Print , "Cursor: "; __image_Cursor
-$If HW Then
-    __image_ScreenBuffer = CopyImage(__image_Screen, 33): Print , "ScreenBuffer: "; __image_ScreenBuffer
+$If HW = TRUE Then
+    __image_ScreenBuffer = COPYIMAGE(__image_Screen, 33): PRINT , "ScreenBuffer: "; __image_ScreenBuffer
 $End If
 
 
 Print "...Fonts:"
 '...and the FONTs
 $If LINUX Then
-    __font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14): Print , "Header: "; __font_Header
-    __font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12): Print , "Body: "; __font_Body
+    __font_Header = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf", 14, "DONTBLEND"): Print , "Header: "; __font_Header
+    __font_Body = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-L.ttf", 12, "DONTBLEND"): Print , "Body: "; __font_Body
     __font_Mono = LoadFont("/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 12, "DONTBLEND"): Print , "Mono: "; __font_Mono
 
-    __font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12): Print , "Serif: "; __font_Serif
-    __font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12): Print , "Sans: "; __font_Sans
+    __font_Serif = LoadFont("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 12, "DONTBLEND"): Print , "Serif: "; __font_Serif
+    __font_Sans = LoadFont("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 12, "DONTBLEND"): Print , "Sans: "; __font_Sans
 $Else
     'TODO: integrate Windows & MacOS fonts
     __font_Header = 16
@@ -94,6 +104,7 @@ __template_Win.H = 240
 __template_Win.Z = 0
 __template_Win.IH = 0
 __template_Win.FH = __font_Body
+__template_Win.PM = __PM_KeepBackground
 __template_Win.NeedsRefresh = True
 Print , "Win"
 
@@ -103,6 +114,7 @@ __template_Overlay.H = 60
 __template_Overlay.Z = 0
 __template_Overlay.IH = 0
 __template_Overlay.FH = __font_Body
+__template_Overlay.PM = __PM_KeepBackground
 __template_Overlay.NeedsRefresh = True
 Print , "Overlay"
 
@@ -112,6 +124,7 @@ __template_WinOptions.H = 60
 __template_WinOptions.Z = 0
 __template_WinOptions.IH = NewImage(120, 60, 32)
 __template_WinOptions.FH = __font_Body
+__template_WinOptions.PM = __PM_KeepBackground
 __template_WinOptions.NeedsRefresh = True
 Print , "WinOptions"
 
@@ -132,9 +145,11 @@ MouseHide
 
 $If HW = TRUE Then
     'DisplayOrder Hardware , Software
-    Dest __image_ScreenBuffer
-    Font __param_screenFont, __image_ScreenBuffer
+    DEST __image_ScreenBuffer
+    FONT __param_ScreenFont, __image_ScreenBuffer
+    printmode keepbackground,__image_screenbuffer
 $Else
     Dest Display
     Font __param_ScreenFont, __image_Screen
+    PrintMode KeepBackground , __image_Screen
 $End If
