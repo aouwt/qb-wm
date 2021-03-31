@@ -7,12 +7,14 @@ Dim win_Log As Integer
 Dim win_Img As Integer, win_Img_Image As Long
 Dim win_Cat As Integer, win_Cat_Text As String
 Dim win_Launcher
+Dim win_Other As Integer
 
 win_Img_Image = LoadImage("images/image.jpg", 32)
+SetAlpha 200, , win_Img_Image
 
 temp = __template_Win
 temp.IH = NewImage(temp.W, temp.H, 32)
-temp.T = "Launcher"
+temp.T = ""
 win_Launcher = newWin(temp)
 
 
@@ -64,18 +66,23 @@ Do
 
 
             Case win_Launcher
+                w(win).W = 100
+                w(win).H = 76
                 If (w(win).NeedsRefresh <> 0) Or (w(win_Launcher).Z = 0) Then
                     resizeWin win
                     Dest w(win).IH
                     Line (0, 0)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
                     Line (0, 20)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
                     Line (0, 40)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
+                    Line (0, 60)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
                     If win_Log Then PrintString (2, 2), "Close log" Else PrintString (2, 2), "Open log"
                     If win_Cat Then PrintString (2, 22), "Close text editor" Else PrintString (2, 22), "Open text editor"
                     If win_Img Then PrintString (2, 42), "Close image" Else PrintString (2, 42), "Open image"
+                    If win_Other Then PrintString (2, 62), "Close debug" Else PrintString (2, 62), "Open debug"
                 End If
                 If w(win_Launcher).Z = 0 Then
                     If MouseButton(1) And ((w(win).MX < 100) And (w(win).MX > 0)) Then
+                        w(win).NeedsRefresh = True
                         Select Case w(win).MY
                             Case 0 TO 16
                                 If win_Log Then
@@ -113,28 +120,34 @@ Do
                                     temp.T = "Image"
                                     win_Img = newWin(temp)
                                 End If
+
+                            Case 60 TO 76
+                                If win_Other Then
+                                    freeWin win_Other
+                                    win_Other = 0
+                                Else
+                                    temp = __template_Win
+                                    temp.IH = NewImage(temp.W, temp.H, 32)
+                                    temp.FH = __font_Mono
+                                    win_Other = newWin(temp)
+                                End If
                         End Select
                     End If
                 End If
 
 
-                'Case otherWin 'Other window
-                '    If (w(win).W > 8) And (w(win).H > 8) Then 'Resize it. Again, not needed every frame, but it should be fine.
-                '        FreeImage w(win).IH
-                '        w(win).IH = NewImage(w(win).W, w(win).H, 32)
-                '        Font w(win).FH, w(win).IH
-                '    End If
+            Case win_Other 'Other window
+                If w(win).NeedsRefresh Then resizeWin win_Other
+                'Window contents
+                Dest w(win).IH
+                Cls , 0
+                Print Using "X: ####  Y: ####  Z: +####"; w(win).X, w(win).Y, w(win).Z
+                Print Using "W: ####  H: ####"; w(win).W, w(win).H
+                Print Using "MX: ####  MY: ####  MS: +#  MAS: ####"; w(win).MX, w(win).MY, w(win).MS, w(win).MAS
+                Print Using "IH: ########  FH: ########  win: ###"; w(win).IH, w(win).FH, win
 
-                '    'Window contents
-                '    Dest w(win).IH
-                '    Print "X:"; w(win).X, "Y:"; w(win).Y
-                '    Print "Z:"; w(win).Z
-                '    Print "W:"; w(win).W, "H:"; w(win).H
-                '    Print "T:"; w(win).T, "WH:"; win
-                '    Print "IH:"; w(win).IH, "FH:"; w(win).FH
-
-                '    'Window title
-                '    w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
+                'Window title
+                w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
         End Select
     Next
     upd
@@ -168,7 +181,7 @@ End Sub
 Sub printWithWrap (text As String, win As Integer)
     Shared w() As winType
 
-    If w(win).MAS < 1 Then w(win).MAS = 1
+    If w(win).MAS > 0 Then w(win).MAS = 0
     Rem $DYNAMIC
     Dim words(1) As String
     Call splitIntoWords(words(), text)
@@ -179,7 +192,7 @@ Sub printWithWrap (text As String, win As Integer)
     Dim wordCount As Unsigned Long
     Dim current_X As Unsigned Long, current_Y As Unsigned Long
     current_X = 0
-    current_Y = w(win).MAS * 10
+    current_Y = w(win).MAS
 
     For wordCount = 0 To UBound(words) ' for word wrapping
         Dim wordSize As Unsigned Integer
@@ -219,9 +232,10 @@ $If LIGHT = TRUE Then
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
     _DontBlend
 
-    If w.Z = 0 Then  _
-    Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF000000, BF _
+    If w.Z = 0 Then
+    Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF000000, BF
     Else Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &HFF999999, BF
+    End If
 
     PrintString ((w.W - PrintWidth(w.T, 0)) / 2 + w.X, w.Y + 1), w.T ' Title
 
@@ -332,6 +346,8 @@ Function newWin% (template As winType)
     Shared w() As winType
 
     Font template.FH, template.IH
+    template.X = MouseX
+    template.Y = MouseY
     Dim i As Integer
     For i = LBound(w) To UBound(w)
 
@@ -468,7 +484,7 @@ Sub updateMouse Static
 
     If __focusedWindow Then
         w(__focusedWindow).MS = MouseWheel
-        If w(__focusedWindow).MS <> 0 Then w(__focusedWindow).NeedsRefresh = True Else w(__focusedWindow).MAS = w(__focusedWindow).MAS + w(__focusedWindow).MS
+        If w(__focusedWindow).MS <> 0 Then w(__focusedWindow).NeedsRefresh = True: w(__focusedWindow).MAS = w(__focusedWindow).MAS + w(__focusedWindow).MS
 
         If MouseButton(1) Then 'Move (Left click)
             w(__focusedWindow).X = w(__focusedWindow).X + (MouseX - mLockX)
