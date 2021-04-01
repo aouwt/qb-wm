@@ -59,7 +59,7 @@ Dim __image_ScreenBuffer As Long
 Dim __image_Cursor As Long
 
 Dim __param_ScreenFont As Long
-Dim __param_TBHeight As Unsigned Integer
+Dim __param_TBHeight As Unsigned Byte
 
 Dim Shared __inKey As String
 Dim Shared __focusedWindow As Integer

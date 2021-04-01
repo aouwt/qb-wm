@@ -10,7 +10,7 @@ Dim win_Launcher
 Dim win_Other As Integer
 
 win_Img_Image = LoadImage("images/image.jpg", 32)
-SetAlpha 200, , win_Img_Image
+'SetAlpha 250, , win_Img_Image
 
 temp = __template_Win
 temp.IH = NewImage(temp.W, temp.H, 32)
@@ -71,65 +71,82 @@ Do
                 If (w(win).NeedsRefresh <> 0) Or (w(win_Launcher).Z = 0) Then
                     resizeWin win
                     Dest w(win).IH
-                    Line (0, 0)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
-                    Line (0, 20)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
-                    Line (0, 40)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
-                    Line (0, 60)-Step(100, 16), RGBA32(64, 64, 64, 200), BF
+                    Line (0, 0)-Step(100, 16), &H404040C8, BF
+                    Line (0, 20)-Step(100, 16), &H404040C8, BF
+                    Line (0, 40)-Step(100, 16), &H404040C8, BF
+                    Line (0, 60)-Step(100, 16), &H404040C8, BF
                     If win_Log Then PrintString (2, 2), "Close log" Else PrintString (2, 2), "Open log"
                     If win_Cat Then PrintString (2, 22), "Close text editor" Else PrintString (2, 22), "Open text editor"
                     If win_Img Then PrintString (2, 42), "Close image" Else PrintString (2, 42), "Open image"
                     If win_Other Then PrintString (2, 62), "Close debug" Else PrintString (2, 62), "Open debug"
                 End If
+
                 If w(win_Launcher).Z = 0 Then
-                    If MouseButton(1) And ((w(win).MX < 100) And (w(win).MX > 0)) Then
+                    If ((w(win).MX < 100) And (w(win).MX > 0)) Then
                         w(win).NeedsRefresh = True
                         Select Case w(win).MY
                             Case 0 TO 16
-                                If win_Log Then
-                                    freeWin win_Log
-                                    win_Log = 0
+                                If MouseButton(1) Then
+                                    If win_Log Then
+                                        freeWin win_Log
+                                        win_Log = 0
+                                    Else
+                                        temp = __template_Win
+                                        temp.X = 50
+                                        temp.IH = NewImage(320, 240, 32)
+                                        temp.T = "Log"
+                                        temp.FH = __font_Mono
+                                        win_Log = newWin(temp)
+                                    End If
                                 Else
-                                    temp = __template_Win
-                                    temp.X = 50
-                                    temp.IH = NewImage(320, 240, 32)
-                                    temp.T = "Log"
-                                    temp.FH = __font_Mono
-                                    win_Log = newWin(temp)
+                                    Line (0, 0)-(100, 16), &H66666666, BF
                                 End If
 
                             Case 20 TO 36
-                                If win_Cat Then
-                                    freeWin win_Cat
-                                    win_Cat = 0
+                                If MouseButton(1) Then
+                                    If win_Cat Then
+                                        freeWin win_Cat
+                                        win_Cat = 0
+                                    Else
+                                        temp = __template_Win
+                                        temp.X = 200
+                                        temp.IH = NewImage(320, 240, 32)
+                                        temp.T = "Text editor"
+                                        temp.FH = __font_Sans
+                                        win_Cat = newWin(temp)
+                                    End If
                                 Else
-                                    temp = __template_Win
-                                    temp.X = 200
-                                    temp.IH = NewImage(320, 240, 32)
-                                    temp.T = "Text editor"
-                                    temp.FH = __font_Sans
-                                    win_Cat = newWin(temp)
+                                    Line (0, 20)-(100, 36), &H66666666, BF
                                 End If
 
                             Case 40 TO 56
-                                If win_Img Then
-                                    freeWin win_Img
-                                    win_Img = 0
+                                If MouseButton(1) Then
+                                    If win_Img Then
+                                        freeWin win_Img
+                                        win_Img = 0
+                                    Else
+                                        temp = __template_Win
+                                        temp.IH = NewImage(temp.W, temp.H, 32)
+                                        temp.T = "Image"
+                                        win_Img = newWin(temp)
+                                    End If
                                 Else
-                                    temp = __template_Win
-                                    temp.IH = NewImage(temp.W, temp.H, 32)
-                                    temp.T = "Image"
-                                    win_Img = newWin(temp)
+                                    Line (0, 40)-(100, 56), &H66666666, BF
                                 End If
 
                             Case 60 TO 76
-                                If win_Other Then
-                                    freeWin win_Other
-                                    win_Other = 0
+                                If MouseButton(1) Then
+                                    If win_Other Then
+                                        freeWin win_Other
+                                        win_Other = 0
+                                    Else
+                                        temp = __template_Win
+                                        temp.IH = NewImage(temp.W, temp.H, 32)
+                                        temp.FH = __font_Mono
+                                        win_Other = newWin(temp)
+                                    End If
                                 Else
-                                    temp = __template_Win
-                                    temp.IH = NewImage(temp.W, temp.H, 32)
-                                    temp.FH = __font_Mono
-                                    win_Other = newWin(temp)
+                                    Line (0, 60)-(100, 76), &H66666666, BF
                                 End If
                         End Select
                     End If
@@ -148,6 +165,7 @@ Do
 
                 'Window title
                 w(win).T = "Window " + LTrim$(Str$(win)) + " (" + LTrim$(Str$(w(win).X)) + "," + LTrim$(Str$(w(win).Y)) + ")-(" + LTrim$(Str$(w(win).W + w(win).X)) + "," + LTrim$(Str$(w(win).H + w(win).Y)) + ")"
+
         End Select
     Next
     upd
@@ -227,7 +245,7 @@ $Checking:On
 $Checking:Off
 $If LIGHT = TRUE Then
     Sub putWin (w As winType)
-    Shared __param_TBHeight As Unsigned Integer
+    Shared __param_TBHeight As Unsigned byte
 
     If w.IH = 0 Then Exit Sub 'Make sure the handle isn't invalid to prevent Illegal Function Call errors!
     _DontBlend
@@ -243,7 +261,7 @@ $If LIGHT = TRUE Then
     End Sub
 $Else
     Sub putWin (w As winType)
-        Shared __param_TBHeight As Unsigned Integer
+        Shared __param_TBHeight As Unsigned Byte
 
         'For speed
         Rem RGBA32(0, 0, 0, 10)  = &H0A000000
@@ -267,12 +285,18 @@ $Else
 
         If w.Z Then Line (w.X, w.Y)-Step(w.W + 2, w.H + __param_TBHeight + 1), &H40000000, BF 'Dark overlay if not focused
     End Sub
+
+    Sub putOverlay (w As winType)
+        Shared __param_TBHeight As Unsigned Byte
+        Line (w.X, w.Y)-Step(w.W, w.H), &HFF000000, B
+        PutImage (w.X + 1, w.Y + 1), w.IH
+    End Sub
 $End If
 $Checking:On
 
 
 $Checking:Off
-Sub upd Static
+Sub upd
     Shared w() As winType
     Shared winZOrder() As Byte
     Shared __image_Background As Long
@@ -280,6 +304,7 @@ Sub upd Static
     Shared __image_ScreenBuffer As Long
     Shared __image_Cursor As Long
     Shared __param_ScreenFont As Long
+    'Shared __inKey$
 
     __inKey$ = InKey$
 
@@ -325,7 +350,7 @@ Sub upd Static
     Dim i As Integer
     For i = UBound(winZOrder) To LBound(winZOrder) Step -1
         If winZOrder(i) <> 0 Then
-            putWin w(winZOrder(i))
+            If w(winZOrder(i)).T = "" Then putOverlay w(winZOrder(i)) Else putWin w(winZOrder(i))
         End If
     Next
 
@@ -373,11 +398,13 @@ End Function
 
 
 '$Checking:Off
-Sub logP (s As String) Static
+Sub logP (s As String)
     Shared w() As winType
     Shared win_Log As Integer
 
-    Dim i As Long, l As String
+    Static l As String
+
+    Dim i As Long
     i = Dest
 
     If s <> "" Then l = l + s + " " + Chr$(13) + " "
@@ -394,8 +421,8 @@ End Sub
 
 
 
-Function fps% Static
-    Dim t As Double
+Function fps%
+    Static t As Double
     Dim t2 As Double
 
     t2 = Timer(0.0001)
@@ -419,15 +446,15 @@ End Sub
 
 
 $Checking:Off
-Sub updateMouse Static
+Sub updateMouse
     Shared w() As winType
     Shared winZOrder() As Byte
-    Shared __param_TBHeight As Unsigned Integer
+    Shared __param_TBHeight As Unsigned Byte
 
 
-    Dim optMenu As Integer, optWin As Integer
-    Dim mLockX As Single, mLockY As Single 'Or as I like to call it, mmmlocks and mmmlockie
-    Dim mouseLatch As Bit
+    Static optMenu As Integer, optWin As Integer
+    Static mLockX As Single, mLockY As Single 'Or as I like to call it, mmmlocks and mmmlockie
+    Static mouseLatch As Bit
 
     Dim win As Integer, i As Integer
     For win = LBound(winZOrder) To UBound(winZOrder)
@@ -435,10 +462,13 @@ Sub updateMouse Static
 
         If i = 0 Then Continue
 
-        w(i).MX = MouseX - (w(i).X + 1)
-        w(i).MY = MouseY - (w(i).Y + __param_TBHeight + 1)
-
-        If w(i).T = "" Then Continue
+        If w(i).T = "" Then
+            w(i).MX = MouseX - (w(i).X + 1)
+            w(i).MY = MouseY - (w(i).Y + 1)
+        Else
+            w(i).MX = MouseX - (w(i).X + 1)
+            w(i).MY = MouseY - (w(i).Y + __param_TBHeight + 1)
+        End If
 
         If mouseIsOver(i) Then
 
@@ -493,10 +523,15 @@ Sub updateMouse Static
         ElseIf MouseButton(2) Then 'Resize (Right click)
             w(__focusedWindow).W = w(__focusedWindow).W + (MouseX - mLockX)
             w(__focusedWindow).H = w(__focusedWindow).H + (MouseY - mLockY)
+            $If LIGHT = FALSE Then
+                w(__focusedWindow).NeedsRefresh = True
+            $End If
 
-        ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then
-            w(__focusedWindow).NeedsRefresh = True
-        Else
+            $If LIGHT = TRUE Then
+                ElseIf (w(__focusedWindow).W <> _Width(w(__focusedWindow).IH)) Or (w(__focusedWindow).H <> _Height(w(__focusedWindow).IH)) Then
+                w(__focusedWindow).NeedsRefresh = True
+            $End If
+            'Else
             'w(__focusedWindow).NeedsRefresh = False
 
     End If: End If
